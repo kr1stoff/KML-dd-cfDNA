@@ -1,13 +1,3 @@
-import pandas as pd
-
-# 读取样本表
-samples_df = pd.read_table(
-    config["samples_tsv"], header=None, names=["sample", "fq1", "fq2"]
-)
-samples = samples_df["sample"].tolist()
-
-
-# 创建软连接
 rule create_symlinks:
     input:
         fq1=lambda wildcards: samples_df.loc[

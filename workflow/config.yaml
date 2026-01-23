@@ -4,8 +4,13 @@ conda:
   fastqc: basic
   multiqc: basic
   fastp: basic2
+  bwa: basic
+  samtools: basic
 # 线程数配置
 threads:
   low: 4
   medium: 8
   high: 16
+# 数据库配置
+database:
+  hg19: /data/mengxf/Database/reference/hg19/hg19.fa

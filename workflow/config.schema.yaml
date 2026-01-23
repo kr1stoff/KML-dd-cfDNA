@@ -1,5 +1,6 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
+description: 配置文件模式检查
 required:
   - samples_tsv
 properties:
@@ -8,6 +9,7 @@ properties:
     description: 样本表文件路径, 包含样本名称和 FASTQ 文件路径, 后续添加更多元数据信息
     minLength: 1
   conda:
+    description: Conda 环境配置
     type: object
     properties:
       python:
@@ -21,16 +23,17 @@ properties:
     additionalProperties: true
   threads:
     type: object
+    description: 线程配置
     properties:
       low:
         type: integer
         minimum: 1
-        description: 低线程任务的线程数
+        description: 低线程任务
       medium:
         type: integer
         minimum: 1
-        description: 中等线程任务的线程数
+        description: 中等线程任务
       high:
         type: integer
         minimum: 1
-        description: 高线程任务的线程数
+        description: 高线程任务
