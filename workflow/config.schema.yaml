@@ -1,0 +1,36 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+required:
+  - samples_tsv
+properties:
+  samples_tsv:
+    type: string
+    description: 样本表文件路径, 包含样本名称和 FASTQ 文件路径, 后续添加更多元数据信息
+    minLength: 1
+  conda:
+    type: object
+    properties:
+      python:
+        type: string
+      fastqc:
+        type: string
+      multiqc:
+        type: string
+      fastp:
+        type: string
+    additionalProperties: true
+  threads:
+    type: object
+    properties:
+      low:
+        type: integer
+        minimum: 1
+        description: 低线程任务的线程数
+      medium:
+        type: integer
+        minimum: 1
+        description: 中等线程任务的线程数
+      high:
+        type: integer
+        minimum: 1
+        description: 高线程任务的线程数

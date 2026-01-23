@@ -1,0 +1,11 @@
+# conda 环境配置
+conda:
+  python: python3.12
+  fastqc: basic
+  multiqc: basic
+  fastp: basic2
+# 线程数配置
+threads:
+  low: 4
+  medium: 8
+  high: 16
