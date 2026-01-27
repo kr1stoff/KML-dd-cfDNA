@@ -26,14 +26,11 @@ samples = samples_df["sample"].tolist()
 rule all:
     input:
         "multiqc",
-        expand("align/rmdup/{sample}.rmdup.bam", sample=samples),
+        expand("align/umi/{sample}.rmdup.bam", sample=samples),
 
 
 # 导入公共规则
 include: "rules/rawdata.smk"
 include: "rules/fastqc.smk"
-include: "rules/fastp.smk"
-# TODO 参考艾吉泰康 UMI 处理
-include: "rules/bwa.smk"
-# TODO 统计比对率,在靶率等信息
-include: "rules/samtools.smk"
+
+include: "rules/umi.smk"

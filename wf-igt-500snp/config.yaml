@@ -6,6 +6,8 @@ conda:
   fastp: basic2
   bwa: basic
   samtools: basic
+  fgbio: basic2
+  gatk: basic
 # 线程数配置
 threads:
   low: 4

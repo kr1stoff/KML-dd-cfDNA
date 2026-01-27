@@ -1,3 +1,36 @@
+# QC
+rule fastqc:
+    input:
+        rules.create_symlinks.output.fq1,
+        rules.create_symlinks.output.fq2,
+    output:
+        directory("qc/fastqc/{sample}"),
+    benchmark:
+        ".log/qc/fastqc/{sample}.bm"
+    log:
+        ".log/qc/fastqc/{sample}.log",
+    conda:
+        config["conda"]["fastqc"]
+    threads: config["threads"]["low"]
+    shell:
+        "mkdir {output} && fastqc {input} -o {output} -t {threads} --extract &> {log}"
+
+
+rule multiqc:
+    input:
+        expand("qc/fastqc/{sample}", sample=samples),
+    output:
+        directory("qc/multiqc"),
+    benchmark:
+        ".log/qc/multiqc/multiqc.bm"
+    log:
+        ".log/qc/multiqc/multiqc.log",
+    conda:
+        config["conda"]["multiqc"]
+    shell:
+        "multiqc {input} --outdir {output} 2> {log}"
+
+
 rule fastp:
     input:
         sample=[
@@ -16,7 +49,8 @@ rule fastp:
         config["conda"]["fastp"]
     threads: config["threads"]["low"]
     params:
-        extra="-q 15 -u 40 -l 25 --cut_right --cut_window_size 20 --cut_mean_quality 30 --correction",
+        # UMI 数据尽量少剪切, 否则会导致 UMI 丢失
+        extra="",
     shell:
         """
         fastp -w {threads} {params.extra} \

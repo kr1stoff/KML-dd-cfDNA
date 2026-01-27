@@ -20,6 +20,14 @@ properties:
         type: string
       fastp:
         type: string
+      bwa:
+        type: string
+      samtools:
+        type: string
+      fgbio:
+        type: string
+      gatk:
+        type: string
     additionalProperties: true
   threads:
     type: object
