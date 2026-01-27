@@ -7,12 +7,19 @@ conda:
   bwa: basic
   samtools: basic
   fgbio: basic2
-  gatk: basic
+  picard: basic2
+
 # 线程数配置
 threads:
   low: 4
   medium: 8
   high: 16
+
 # 数据库配置
 database:
   hg19: /data/mengxf/Database/reference/hg19/hg19.fa
+
+# 自定义软件参数
+custom:
+  # Java 堆内存限制. fgbio/picard 等软件需要设置
+  java_mem: "-Xmx8G"

@@ -32,5 +32,4 @@ rule all:
 # 导入公共规则
 include: "rules/rawdata.smk"
 include: "rules/fastqc.smk"
-
 include: "rules/umi.smk"

@@ -11,7 +11,8 @@ rule fastqc:
         ".log/qc/fastqc/{sample}.log",
     conda:
         config["conda"]["fastqc"]
-    threads: config["threads"]["low"]
+    threads:
+        config["threads"]["low"]
     shell:
         "mkdir {output} && fastqc {input} -o {output} -t {threads} --extract &> {log}"
 
@@ -47,7 +48,8 @@ rule fastp:
         ".log/qc/fastp/{sample}.fastp.bm"
     conda:
         config["conda"]["fastp"]
-    threads: config["threads"]["low"]
+    threads:
+        config["threads"]["low"]
     params:
         # UMI 数据尽量少剪切, 否则会导致 UMI 丢失
         extra="",

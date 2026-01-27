@@ -45,3 +45,10 @@ properties:
         type: integer
         minimum: 1
         description: 高线程任务
+  custom:
+    type: object
+    description: 自定义软件参数
+    properties:
+      java_mem:
+        type: string
+        description: Java 堆内存限制, 例如 "-Xmx8G"
