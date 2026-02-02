@@ -26,6 +26,7 @@ samples = samples_df["sample"].tolist()
 rule all:
     input:
         "qc/multiqc",
+        "upload/panel-qc-summary.tsv",
         expand("align/umi/{sample}.consensus.filtered.mapped.withUMI.clipped.bam", sample=samples),
 
 
@@ -33,3 +34,5 @@ rule all:
 include: "rules/rawdata.smk"
 include: "rules/fastqc.smk"
 include: "rules/umi.smk"
+include: "rules/bam_stats.smk"
+include: "rules/summary.smk"

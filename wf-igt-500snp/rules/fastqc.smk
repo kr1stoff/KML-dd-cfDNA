@@ -64,7 +64,7 @@ rule fastp:
 
 rule fq_stats_summary:
     input:
-        expand("fastp/{sample}.json", sample=samples),
+        expand("qc/fastp/{sample}.json", sample=samples),
     output:
         "qc/fastp/fq_summary.tsv",
     benchmark:
@@ -74,4 +74,4 @@ rule fq_stats_summary:
     conda:
         config["conda"]["python"]
     script:
-        "../scripts/fq_all_samples_qc.py"
+        "../scripts/fq_stats_summary.py"

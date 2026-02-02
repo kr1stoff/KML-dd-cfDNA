@@ -4,10 +4,12 @@ conda:
   fastqc: basic
   multiqc: basic
   fastp: basic2
-  bwa: basic
-  samtools: basic
-  fgbio: basic2
-  picard: basic2
+  bwa: ddcfdna
+  samtools: ddcfdna
+  fgbio: ddcfdna
+  picard: ddcfdna
+  bcftools: ddcfdna
+  bedtools: ddcfdna
 
 # 线程数配置
 threads:
@@ -19,8 +21,9 @@ threads:
 database:
   # 参考基因组, 需要提前建 bwa/samtools/picard 索引
   hg19: /data/mengxf/Database/reference/hg19/hg19.fa
+  region: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.predict.bed
 
-# 自定义软件参数
-custom:
+# 运行资源
+resources:
   # Java 堆内存限制. fgbio/picard 等软件需要设置
   java_mem: "-Xmx8G"

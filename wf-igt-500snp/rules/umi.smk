@@ -11,7 +11,7 @@ rule picard_fastq_to_sam:
     conda:
         config["conda"]["picard"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
     shell:
         "picard FastqToSam {params.java_mem} F1={input.fq1} F2={input.fq2} O={output} SAMPLE_NAME={wildcards.sample} 2> {log}"
 
@@ -28,7 +28,7 @@ rule fgbio_extract_umis:
     conda:
         config["conda"]["fgbio"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="--read-structure=6M144T 6M144T --molecular-index-tags=ZA ZB --single-tag=RX"
     shell:
         "fgbio ExtractUmisFromBam {params.java_mem} --input={input} --output={output} {params.extra} 2> {log}"
@@ -46,7 +46,7 @@ rule picard_sam_to_fastq:
     conda:
         config["conda"]["picard"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="INTERLEAVE=true"
     shell:
         "picard SamToFastq {params.java_mem} I={input} F={output} {params.extra} 2> {log}"
@@ -88,7 +88,7 @@ rule picard_merge_bam_alignment:
     conda:
         config["conda"]["picard"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="SO=coordinate ALIGNER_PROPER_PAIR_FLAGS=true MAX_GAPS=-1 ORIENTATIONS=FR VALIDATION_STRINGENCY=SILENT CREATE_INDEX=true"
     shell:
         "picard MergeBamAlignment {params.java_mem} UNMAPPED={input.unmapped} ALIGNED={input.aligned} O={output} R={input.ref} {params.extra} 2> {log}"
@@ -106,7 +106,7 @@ rule fgbio_group_reads_by_umi:
     conda:
         config["conda"]["fgbio"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="--strategy=paired --edits=1 --min-map-q=20"
     threads:
         config["threads"]["medium"]
@@ -126,7 +126,7 @@ rule fgbio_call_duplex_consensus_reads:
     conda:
         config["conda"]["fgbio"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="--error-rate-pre-umi=45 --error-rate-post-umi=30 --min-input-base-quality=30"
     threads:
         config["threads"]["medium"]
@@ -147,7 +147,7 @@ rule fgbio_filter_consensus_reads:
     conda:
         config["conda"]["fgbio"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="--min-reads=2 1 1 --max-read-error-rate=0.05 --max-base-error-rate=0.1 --min-base-quality=50 --max-no-calls=0.05"
     shell:
         "fgbio FilterConsensusReads {params.java_mem} --input={input.bam} --output={output} --ref={input.ref} {params.extra} 2> {log}"
@@ -188,7 +188,7 @@ rule picard_sort_sam_filter_consensus_mapped:
     conda:
         config["conda"]["picard"]
     params:
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         extra="SORT_ORDER=queryname"
     shell:
         "picard SortSam {params.java_mem} INPUT={input} OUTPUT={output} {params.extra} 2> {log}"
@@ -232,7 +232,7 @@ rule fgbio_clip_bam:
         config["conda"]["fgbio"]
     params:
         samtools="-n -u",
-        java_mem=config["custom"]["java_mem"],
+        java_mem=config["resources"]["java_mem"],
         fgbio="--clipping-mode=Soft --clip-overlapping-reads=true"
     shell:
         """
