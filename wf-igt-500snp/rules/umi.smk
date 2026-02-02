@@ -1,9 +1,9 @@
 rule picard_fastq_to_sam:
     input:
-        rules.fastp.output.trimmed[0],
-        rules.fastp.output.trimmed[1],
+        fq1=rules.fastp.output.trimmed[0],
+        fq2=rules.fastp.output.trimmed[1],
     output:
-        "align/umi/{sample}.unmapped.bam",
+        temp("align/umi/{sample}.unmapped.bam"),
     benchmark:
         ".log/align/umi/{sample}.picard_fastq_to_sam.bm"
     log:
@@ -13,14 +13,14 @@ rule picard_fastq_to_sam:
     params:
         java_mem=config["custom"]["java_mem"],
     shell:
-        "picard FastqToSam {params.java_mem} F1={input[0]} F2={input[1]} O={output} SAMPLE_NAME={wildcards.sample}"
+        "picard FastqToSam {params.java_mem} F1={input.fq1} F2={input.fq2} O={output} SAMPLE_NAME={wildcards.sample} 2> {log}"
 
 
 rule fgbio_extract_umis:
     input:
         rules.picard_fastq_to_sam.output,
     output:
-        "align/umi/{sample}.unmapped.withUMI.bam",
+        temp("align/umi/{sample}.unmapped.withUMI.bam"),
     benchmark:
         ".log/align/umi/{sample}.fgbio_extract_umis.bm"
     log:
@@ -29,16 +29,16 @@ rule fgbio_extract_umis:
         config["conda"]["fgbio"]
     params:
         java_mem=config["custom"]["java_mem"],
-        extra: "--read-structure=6M144T 6M144T --molecular-index-tags=ZA ZB --single-tag=RX"
+        extra="--read-structure=6M144T 6M144T --molecular-index-tags=ZA ZB --single-tag=RX"
     shell:
-        "/home/mengxf/miniforge3/envs/basic2/bin/fgbio ExtractUmisFromBam {params.java_mem} --input={input} --output={output} {params.extra}"
+        "fgbio ExtractUmisFromBam {params.java_mem} --input={input} --output={output} {params.extra} 2> {log}"
 
 
 rule picard_sam_to_fastq:
     input:
         rules.fgbio_extract_umis.output,
     output:
-        "align/umi/{sample}.SamToFastq",
+        temp("align/umi/{sample}.SamToFastq"),
     benchmark:
         ".log/align/umi/{sample}.picard_sam_to_fastq.bm"
     log:
@@ -47,39 +47,195 @@ rule picard_sam_to_fastq:
         config["conda"]["picard"]
     params:
         java_mem=config["custom"]["java_mem"],
-        extra: "INTERLEAVE=true"
+        extra="INTERLEAVE=true"
     shell:
-        "picard SamToFastq {params.java_mem} I={input} F={output} {params.extra}"
+        "picard SamToFastq {params.java_mem} I={input} F={output} {params.extra} 2> {log}"
 
 
 rule bwa_mem_raw:
     input:
-        rules.picard_sam_to_fastq.output,
+        fq=rules.picard_sam_to_fastq.output,
+        ref=config["database"]["hg19"]
     output:
         "align/umi/{sample}.mapped.bam",
     benchmark:
-        ".log/align/umi/{sample}.bwa_mem.bm"
+        ".log/align/umi/{sample}.bwa_mem_raw.bm"
     log:
-        ".log/align/umi/{sample}.bwa_mem.log",
+        ".log/align/umi/{sample}.bwa_mem_raw.log",
     conda:
         config["conda"]["bwa"]
     threads:
         config["threads"]["medium"]
-    params:
-
     shell:
-        "bwa mem -p -t {threads} /data/mengxf/Database/reference/hg19/hg19.fa {input} > {output}"
+        """
+        bwa mem -p -t {threads} {input.ref} {input.fq} 2> {log} | \
+        samtools view -@ {threads} -hbS - 2>> {log} | \
+        samtools sort -@ {threads} -o {output} -o {output} - 2>> {log}
+        """
 
-# bwa mem -p -t 32 /data/mengxf/Database/reference/hg19/hg19.fa ZQJ12.SamToFastq > ZQJ12.mapped.bam
 
-# /home/mengxf/miniforge3/envs/basic2/bin/picard MergeBamAlignment \
-#     UNMAPPED=ZQJ12.unmapped.withUMI.bam \
-#     ALIGNED=ZQJ12.mapped.bam \
-#     O=ZQJ12.mapped.withUMI.bam \
-#     R=/data/mengxf/Database/reference/hg19/hg19.fa \
-#     SO=coordinate \
-#     ALIGNER_PROPER_PAIR_FLAGS=true \
-#     MAX_GAPS=-1 \
-#     ORIENTATIONS=FR \
-#     VALIDATION_STRINGENCY=SILENT \
-#     CREATE_INDEX=true
+rule picard_merge_bam_alignment:
+    input:
+        unmapped=rules.fgbio_extract_umis.output,
+        aligned=rules.bwa_mem_raw.output,
+        ref=config["database"]["hg19"]
+    output:
+        temp("align/umi/{sample}.mapped.withUMI.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.picard_merge_bam_alignment.bm"
+    log:
+        ".log/align/umi/{sample}.picard_merge_bam_alignment.log",
+    conda:
+        config["conda"]["picard"]
+    params:
+        java_mem=config["custom"]["java_mem"],
+        extra="SO=coordinate ALIGNER_PROPER_PAIR_FLAGS=true MAX_GAPS=-1 ORIENTATIONS=FR VALIDATION_STRINGENCY=SILENT CREATE_INDEX=true"
+    shell:
+        "picard MergeBamAlignment {params.java_mem} UNMAPPED={input.unmapped} ALIGNED={input.aligned} O={output} R={input.ref} {params.extra} 2> {log}"
+
+
+rule fgbio_group_reads_by_umi:
+    input:
+        rules.picard_merge_bam_alignment.output,
+    output:
+        temp("align/umi/{sample}.GroupedReads.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.fgbio_group_reads_by_umi.bm"
+    log:
+        ".log/align/umi/{sample}.fgbio_group_reads_by_umi.log",
+    conda:
+        config["conda"]["fgbio"]
+    params:
+        java_mem=config["custom"]["java_mem"],
+        extra="--strategy=paired --edits=1 --min-map-q=20"
+    threads:
+        config["threads"]["medium"]
+    shell:
+        "fgbio GroupReadsByUmi {params.java_mem} --threads={threads} --input={input} --output={output} {params.extra} 2> {log}"
+
+
+rule fgbio_call_duplex_consensus_reads:
+    input:
+        rules.fgbio_group_reads_by_umi.output,
+    output:
+        temp("align/umi/{sample}.consensus.unmapped.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.fgbio_call_duplex_consensus_reads.bm"
+    log:
+        ".log/align/umi/{sample}.fgbio_call_duplex_consensus_reads.log",
+    conda:
+        config["conda"]["fgbio"]
+    params:
+        java_mem=config["custom"]["java_mem"],
+        extra="--error-rate-pre-umi=45 --error-rate-post-umi=30 --min-input-base-quality=30"
+    threads:
+        config["threads"]["medium"]
+    shell:
+        "fgbio CallDuplexConsensusReads {params.java_mem} --threads={threads} --input={input} --output={output} {params.extra} 2> {log}"
+
+
+rule fgbio_filter_consensus_reads:
+    input:
+        bam=rules.fgbio_call_duplex_consensus_reads.output,
+        ref=config["database"]["hg19"],
+    output:
+        temp("align/umi/{sample}.consensus.filtered.unmapped.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.fgbio_filter_consensus_reads.bm"
+    log:
+        ".log/align/umi/{sample}.fgbio_filter_consensus_reads.log",
+    conda:
+        config["conda"]["fgbio"]
+    params:
+        java_mem=config["custom"]["java_mem"],
+        extra="--min-reads=2 1 1 --max-read-error-rate=0.05 --max-base-error-rate=0.1 --min-base-quality=50 --max-no-calls=0.05"
+    shell:
+        "fgbio FilterConsensusReads {params.java_mem} --input={input.bam} --output={output} --ref={input.ref} {params.extra} 2> {log}"
+
+
+use rule picard_sam_to_fastq as picard_sam_to_fastq_filter_consensus_reads with:
+    input:
+        rules.fgbio_filter_consensus_reads.output,
+    output:
+        temp("align/umi/{sample}.consensus.filtered.unmapped.Fastq"),
+    benchmark:
+        ".log/align/umi/{sample}.picard_sam_to_fastq_filter_consensus_reads.bm"
+    log:
+        ".log/align/umi/{sample}.picard_sam_to_fastq_filter_consensus_reads.log",
+
+
+use rule bwa_mem_raw as bwa_mem_filter_consensus_reads with:
+    input:
+        fq=rules.picard_sam_to_fastq_filter_consensus_reads.output,
+        ref=config["database"]["hg19"]
+    output:
+        temp("align/umi/{sample}.consensus.filtered.mapped.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.bwa_mem_filter_consensus_reads.bm"
+    log:
+        ".log/align/umi/{sample}.bwa_mem_filter_consensus_reads.log",
+
+
+rule picard_sort_sam_filter_consensus_mapped:
+    input:
+        rules.bwa_mem_filter_consensus_reads.output,
+    output:
+        temp("align/umi/{sample}.consensus.filtered.mapped.sorted.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_mapped.bm"
+    log:
+        ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_mapped.log",
+    conda:
+        config["conda"]["picard"]
+    params:
+        java_mem=config["custom"]["java_mem"],
+        extra="SORT_ORDER=queryname"
+    shell:
+        "picard SortSam {params.java_mem} INPUT={input} OUTPUT={output} {params.extra} 2> {log}"
+
+
+use rule picard_sort_sam_filter_consensus_mapped as picard_sort_sam_filter_consensus_unmapped with:
+    input:
+        rules.fgbio_filter_consensus_reads.output,
+    output:
+        temp("align/umi/{sample}.consensus.filtered.unmapped.sorted.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_unmapped.bm"
+    log:
+        ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_unmapped.log",
+
+
+use rule picard_merge_bam_alignment as picard_merge_bam_alignment_filter_consensus_reads with:
+    input:
+        unmapped=rules.picard_sort_sam_filter_consensus_unmapped.output,
+        aligned=rules.picard_sort_sam_filter_consensus_mapped.output,
+        ref=config["database"]["hg19"]
+    output:
+        temp("align/umi/{sample}.consensus.filtered.mapped.withUMI.bam"),
+    benchmark:
+        ".log/align/umi/{sample}.picard_merge_bam_alignment_filter_consensus_reads.bm"
+    log:
+        ".log/align/umi/{sample}.picard_merge_bam_alignment_filter_consensus_reads.log",
+
+
+rule fgbio_clip_bam:
+    input:
+        bam=rules.picard_merge_bam_alignment_filter_consensus_reads.output,
+        ref=config["database"]["hg19"]
+    output:
+        "align/umi/{sample}.consensus.filtered.mapped.withUMI.clipped.bam",
+    benchmark:
+        ".log/align/umi/{sample}.fgbio_clip_bam.bm"
+    log:
+        ".log/align/umi/{sample}.fgbio_clip_bam.log",
+    conda:
+        config["conda"]["fgbio"]
+    params:
+        samtools="-n -u",
+        java_mem=config["custom"]["java_mem"],
+        fgbio="--clipping-mode=Soft --clip-overlapping-reads=true"
+    shell:
+        """
+        samtools sort {params.samtools} {input.bam} 2> {log} | \
+        fgbio ClipBam {params.java_mem} {params.fgbio} --input=/dev/stdin --output={output} --ref={input.ref} 2>> {log}
+        """

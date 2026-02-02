@@ -34,7 +34,6 @@ bwa mem -p -t 32 /data/mengxf/Database/reference/hg19/hg19.fa ZQJ12.SamToFastq >
     --error-rate-pre-umi=45 --error-rate-post-umi=30 \
     --min-input-base-quality=30
 
-# * 限制内存
 /home/mengxf/miniforge3/envs/basic2/bin/fgbio FilterConsensusReads -Xmx8G \
     --input=ZQJ12.consensus.unmapped.bam --output=ZQJ12.consensus.filtered.unmapped.bam \
     --ref=/data/mengxf/Database/reference/hg19/hg19.fa \
@@ -64,14 +63,49 @@ bwa mem -p -t 32 /data/mengxf/Database/reference/hg19/hg19.fa ZQJ12.consensus.fi
     VALIDATION_STRINGENCY=SILENT \
     CREATE_INDEX=true
 
-# /home/mengxf/miniforge3/envs/basic2/bin/fgbio ClipBam -Xmx8G \
-#     --input=ZQJ12.consensus.filtered.mapped.withUMI.bam --output=ZQJ12.consensus.filtered.mapped.withUMI.clipped.bam \
-#     --ref=/data/mengxf/Database/reference/hg19/hg19.fa --clipping-mode=Soft --clip-overlapping-reads=true
-
-/home/mengxf/miniforge3/envs/basic2/bin/samtools sort -n -u ZQJ12.consensus.filtered.mapped.withUMI.bam | \
+samtools sort -n -u ZQJ12.consensus.filtered.mapped.withUMI.bam | \
     /home/mengxf/miniforge3/envs/basic2/bin/fgbio ClipBam -Xmx8G \
     --input=/dev/stdin \
     --output=ZQJ12.consensus.filtered.mapped.withUMI.clipped.bam \
     --ref=/data/mengxf/Database/reference/hg19/hg19.fa \
     --clipping-mode=Soft \
     --clip-overlapping-reads=true
+
+
+# mpileup
+
+samtools sort --threads 8 \
+    ZQJ12.consensus.filtered.mapped.withUMI.clipped.bam \
+    -o ZQJ12.consensus.filtered.mapped.withUMI.clipped.sorted.bam
+
+samtools index ZQJ12.consensus.filtered.mapped.withUMI.clipped.sorted.bam
+
+bcftools mpileup --threads 8 --max-depth 25000 --min-MQ 20 --min-BQ 30 --no-BAQ --output-type u \
+    --fasta-ref /data/mengxf/Database/reference/hg19/hg19.fa \
+    --regions-file /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.slop500bp.bed \
+    ZQJ12.consensus.filtered.mapped.withUMI.clipped.sorted.bam \
+    -o ZQJ12.region.mpileup.bcf
+
+bcftools index ZQJ12.region.mpileup.bcf
+
+bcftools call --threads 8 --multiallelic-caller --output-type v \
+    --regions-file /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.slop500bp.bed \
+    ZQJ12.region.mpileup.bcf \
+    -o ZQJ12.region.call.vcf
+
+bgzip --keep ZQJ12.region.call.vcf
+
+bcftools index ZQJ12.region.call.vcf.gz
+
+# 提取500个SNP靶点
+bcftools view --regions-file /data/mengxf/Task/KML260115-dd-cfDNA-iGT/Chimerism_SNP_Panel-T3113V1/T3113V1/anno/loci.anno.vcf.gz ZQJ12.region.call.vcf.gz > ZQJ12.region.500snps.vcf
+
+# 计算500个SNP靶点的DP
+bcftools query -f '%DP\n' ZQJ12.region.500snps.vcf \
+| grep -v '\.' \
+| awk '{sum += $1; count++} END {printf "Mean DP: %.2f\n", sum / count}'
+
+# 有变异, 深度 >= 2000X 的条目
+# * snakemake 在 shell 中把 DP 写进文件, 然后读到变量中
+bcftools view -i 'ALT != "." && DP >= 2000 && DP != "."' ZQJ12.region.call.vcf > ZQJ12.region.all.2000dp.vcf
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' ZQJ12.region.all.2000dp.vcf > ZQJ12.region.all.2000dp.AD.txt

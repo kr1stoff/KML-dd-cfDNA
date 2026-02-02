@@ -25,8 +25,8 @@ samples = samples_df["sample"].tolist()
 # 定义最终输出结果
 rule all:
     input:
-        "multiqc",
-        expand("align/umi/{sample}.rmdup.bam", sample=samples),
+        "qc/multiqc",
+        expand("align/umi/{sample}.consensus.filtered.mapped.withUMI.clipped.bam", sample=samples),
 
 
 # 导入公共规则
