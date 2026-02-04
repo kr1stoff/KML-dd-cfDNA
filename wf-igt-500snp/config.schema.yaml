@@ -26,7 +26,11 @@ properties:
         type: string
       fgbio:
         type: string
-      gatk:
+      picard:
+        type: string
+      bcftools:
+        type: string
+      bedtools:
         type: string
     additionalProperties: true
   threads:
@@ -45,9 +49,19 @@ properties:
         type: integer
         minimum: 1
         description: 高线程任务
-  custom:
+  database:
     type: object
-    description: 自定义软件参数
+    description: 数据库配置
+    properties:
+      hg19:
+        type: string
+        description: 参考基因组路径
+      region:
+        type: string
+        description: 探针靶向区域文件路径
+  resources:
+    type: object
+    description: 运行资源配置
     properties:
       java_mem:
         type: string
