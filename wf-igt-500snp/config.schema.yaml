@@ -59,6 +59,12 @@ properties:
       region:
         type: string
         description: 探针靶向区域文件路径
+      region_slop500bp:
+        type: string
+        description: 探针靶向区域 500bp 扩展文件路径
+      anno_500snp:
+        type: string
+        description: 500 SNP 注释文件路径
   resources:
     type: object
     description: 运行资源配置

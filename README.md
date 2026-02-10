@@ -5,7 +5,7 @@
 ### Snakemake 运行
 
 ```bash
-snakemake --snakefile wf-igt-500snp/Snakefile --cores 32 --use-conda --config samples_tsv=/data/mengxf/Task/KML260115-dd-cfDNA-iGT/work/260123-input/input.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/250126 --ignore-incomplete
+snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config samples_tsv=$PWD/tests/example.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130 --ignore-incomplete
 ```
 
 ## 说明

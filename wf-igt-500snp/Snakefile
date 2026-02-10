@@ -27,7 +27,8 @@ rule all:
     input:
         "qc/multiqc",
         "upload/panel-qc-summary.tsv",
-        expand("align/umi/{sample}.consensus.filtered.mapped.withUMI.clipped.bam", sample=samples),
+        expand("snp/raw/{sample}.500snps.txt", sample=samples),
+        expand("snp/umi/{sample}.500snps.txt", sample=samples),
 
 
 # 导入公共规则
@@ -35,4 +36,7 @@ include: "rules/rawdata.smk"
 include: "rules/fastqc.smk"
 include: "rules/umi.smk"
 include: "rules/bam_stats.smk"
+# TODO 删除. 测试原始数据和UMI数据等位频率是否一致
+include: "rules/allele_freq_raw.smk"
+include: "rules/allele_freq.smk"
 include: "rules/summary.smk"

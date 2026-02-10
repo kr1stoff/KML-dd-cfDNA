@@ -1,15 +1,15 @@
-rule mpileup_bcftools:
+rule mpileup_bcftools_raw:
     input:
-        bam=rules.sort_umi_bam.output.bam,
+        bam=rules.bwa_mem_raw.output.bam,
         ref=config["database"]["hg19"],
         region=config["database"]["region_slop500bp"],
     output:
-        vcf="snp/umi/{sample}.region.call.vcf.gz",
-        tbi="snp/umi/{sample}.region.call.vcf.gz.tbi",
+        vcf="snp/raw/{sample}.region.call.vcf.gz",
+        tbi="snp/raw/{sample}.region.call.vcf.gz.tbi",
     benchmark:
-        ".log/snp/umi/{sample}.mpileup_bcftools.bm"
+        ".log/snp/raw/{sample}.mpileup_bcftools_raw.bm"
     log:
-        ".log/snp/umi/{sample}.mpileup_bcftools.log",
+        ".log/snp/raw/{sample}.mpileup_bcftools_raw.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
@@ -25,16 +25,16 @@ rule mpileup_bcftools:
         """
 
 
-rule extract_500snps:
+rule extract_500snps_raw:
     input:
-        vcf=rules.mpileup_bcftools.output.vcf,
+        vcf=rules.mpileup_bcftools_raw.output.vcf,
         anno=config["database"]["anno_500snp"],
     output:
-        txt="snp/umi/{sample}.500snps.txt",
+        txt="snp/raw/{sample}.500snps.txt",
     benchmark:
-        ".log/snp/umi/{sample}.extract_500snps.bm"
+        ".log/snp/raw/{sample}.extract_500snps_raw.bm"
     log:
-        ".log/snp/umi/{sample}.extract_500snps.log",
+        ".log/snp/raw/{sample}.extract_500snps_raw.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]

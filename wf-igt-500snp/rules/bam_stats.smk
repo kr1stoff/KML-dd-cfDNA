@@ -1,23 +1,8 @@
-rule samtools_index:
-    input:
-        rules.bwa_mem_raw.output,
-    output:
-        "align/umi/{sample}.mapped.bam.bai",
-    log:
-        ".log/align/umi/{sample}.samtools_index.log",
-    benchmark:
-        ".log/align/umi/{sample}.samtools_index.bm"
-    conda:
-        config["conda"]["samtools"]
-    shell:
-        "samtools index {input} 2> {log}"
-
-
 rule samtools_stats:
     input:
-        bam=rules.bwa_mem_raw.output,
+        bam=rules.bwa_mem_raw.output.bam,
         bed=config["database"]["region"],
-        idx=rules.samtools_index.output,
+        idx=rules.bwa_mem_raw.output.bai,
     output:
         "align/stats/{sample}.bam.target.stat",
     benchmark:
@@ -33,7 +18,7 @@ rule samtools_stats:
 
 rule samtools_stats_all:
     input:
-        rules.bwa_mem_raw.output,
+        rules.bwa_mem_raw.output.bam,
     output:
         "align/stats/{sample}.bam.stat",
     benchmark:
@@ -49,7 +34,7 @@ rule samtools_stats_all:
 
 rule samtools_depth:
     input:
-        bam=rules.bwa_mem_raw.output,
+        bam=rules.bwa_mem_raw.output.bam,
         bed=config["database"]["region"],
     output:
         "align/stats/{sample}.bam.target.depth",

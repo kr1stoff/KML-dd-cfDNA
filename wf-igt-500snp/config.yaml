@@ -22,6 +22,8 @@ database:
   # 参考基因组, 需要提前建 bwa/samtools/picard 索引
   hg19: /data/mengxf/Database/reference/hg19/hg19.fa
   region: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.predict.bed
+  region_slop500bp: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.predictSlop500bp.bed
+  anno_500snp: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/loci.anno.vcf
 
 # 运行资源
 resources:
