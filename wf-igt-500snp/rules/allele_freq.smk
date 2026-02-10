@@ -5,7 +5,7 @@ rule mpileup_bcftools:
         region=config["database"]["region_slop500bp"],
     output:
         vcf="snp/umi/{sample}.region.call.vcf.gz",
-        tbi="snp/umi/{sample}.region.call.vcf.gz.tbi",
+        csi="snp/umi/{sample}.region.call.vcf.gz.csi",
     benchmark:
         ".log/snp/umi/{sample}.mpileup_bcftools.bm"
     log:
@@ -18,10 +18,10 @@ rule mpileup_bcftools:
         call="--multiallelic-caller -Ov",
     shell:
         """
-        bcftools mpileup --threads {threads} {params.mpileup} --fasta-ref {input.ref} --regions-file {input.region} {input.bam} | \
-            bcftools call --threads {threads} {params.call} | \
-            bgzip -c > {output.vcf}
-        bcftools index {output.vcf}
+        bcftools mpileup --threads {threads} {params.mpileup} --fasta-ref {input.ref} --regions-file {input.region} {input.bam} 2> {log} | \
+            bcftools call --threads {threads} {params.call} 2>> {log} | \
+            bgzip -c > {output.vcf} 2>> {log}
+        bcftools index {output.vcf} 2>> {log}
         """
 
 
@@ -40,6 +40,6 @@ rule extract_500snps:
     threads: config["threads"]["medium"]
     shell:
         """
-        bcftools view -R {input.anno} {input.vcf} | \
-            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%DP[\t%AD]\n' > {output.txt}
+        bcftools view -R {input.anno} {input.vcf} 2> {log} | \
+            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%DP[\t%AD]\n' > {output.txt} 2>> {log}
         """

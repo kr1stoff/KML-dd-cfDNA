@@ -168,7 +168,8 @@ use rule bwa_mem_raw as bwa_mem_filter_consensus_reads with:
         fq=rules.picard_sam_to_fastq_filter_consensus_reads.output,
         ref=config["database"]["hg19"],
     output:
-        temp("align/umi/{sample}.consensus.filtered.mapped.bam"),
+        bam=temp("align/umi/{sample}.consensus.filtered.mapped.bam"),
+        bai=temp("align/umi/{sample}.consensus.filtered.mapped.bam.bai"),
     benchmark:
         ".log/align/umi/{sample}.bwa_mem_filter_consensus_reads.bm"
     log:
@@ -177,7 +178,7 @@ use rule bwa_mem_raw as bwa_mem_filter_consensus_reads with:
 
 rule picard_sort_sam_filter_consensus_mapped:
     input:
-        rules.bwa_mem_filter_consensus_reads.output,
+        rules.bwa_mem_filter_consensus_reads.output.bam,
     output:
         temp("align/umi/{sample}.consensus.filtered.mapped.sorted.bam"),
     benchmark:
