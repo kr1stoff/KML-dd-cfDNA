@@ -9,8 +9,7 @@ conda:
   fgbio: ddcfdna
   picard: ddcfdna
   bedtools: ddcfdna
-  # bcftools 需要 libgsl.so.25, 但是 ddcfdna 环境安装的是 libgsl.so.27, reinstall 无法解决
-  bcftools: basic
+  bcftools: ddcfdna
 
 # 线程数配置
 threads:
