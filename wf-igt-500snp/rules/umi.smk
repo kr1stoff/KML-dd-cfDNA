@@ -2,6 +2,7 @@ rule picard_fastq_to_sam:
     input:
         fq1=rules.fastp.output.trimmed[0],
         fq2=rules.fastp.output.trimmed[1],
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.unmapped.bam"),
     benchmark:
@@ -13,7 +14,7 @@ rule picard_fastq_to_sam:
     params:
         java_mem=config["resources"]["java_mem"],
     shell:
-        "picard FastqToSam {params.java_mem} F1={input.fq1} F2={input.fq2} O={output} SAMPLE_NAME={wildcards.sample} 2> {log}"
+        "picard FastqToSam {params.java_mem} F1={input.fq1} F2={input.fq2} O={output} SAMPLE_NAME={wildcards.sample} TMP_DIR={input.tmp_dir} 2> {log}"
 
 
 rule fgbio_extract_umis:
@@ -36,7 +37,8 @@ rule fgbio_extract_umis:
 
 rule picard_sam_to_fastq:
     input:
-        rules.fgbio_extract_umis.output,
+        bam=rules.fgbio_extract_umis.output,
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.SamToFastq"),
     benchmark:
@@ -49,7 +51,7 @@ rule picard_sam_to_fastq:
         java_mem=config["resources"]["java_mem"],
         extra="INTERLEAVE=true",
     shell:
-        "picard SamToFastq {params.java_mem} I={input} F={output} {params.extra} 2> {log}"
+        "picard SamToFastq {params.java_mem} I={input.bam} F={output} {params.extra} TMP_DIR={input.tmp_dir} 2> {log}"
 
 
 rule bwa_mem_raw:
@@ -80,6 +82,7 @@ rule picard_merge_bam_alignment:
         unmapped=rules.fgbio_extract_umis.output,
         aligned=rules.bwa_mem_raw.output.bam,
         ref=config["database"]["hg19"],
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.mapped.withUMI.bam"),
     benchmark:
@@ -92,7 +95,7 @@ rule picard_merge_bam_alignment:
         java_mem=config["resources"]["java_mem"],
         extra="SO=coordinate ALIGNER_PROPER_PAIR_FLAGS=true MAX_GAPS=-1 ORIENTATIONS=FR VALIDATION_STRINGENCY=SILENT CREATE_INDEX=true",
     shell:
-        "picard MergeBamAlignment {params.java_mem} UNMAPPED={input.unmapped} ALIGNED={input.aligned} O={output} R={input.ref} {params.extra} 2> {log}"
+        "picard MergeBamAlignment {params.java_mem} UNMAPPED={input.unmapped} ALIGNED={input.aligned} O={output} R={input.ref} {params.extra} TMP_DIR={input.tmp_dir} 2> {log}"
 
 
 rule fgbio_group_reads_by_umi:
@@ -178,7 +181,8 @@ use rule bwa_mem_raw as bwa_mem_filter_consensus_reads with:
 
 rule picard_sort_sam_filter_consensus_mapped:
     input:
-        rules.bwa_mem_filter_consensus_reads.output.bam,
+        bam=rules.bwa_mem_filter_consensus_reads.output.bam,
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.consensus.filtered.mapped.sorted.bam"),
     benchmark:
@@ -191,7 +195,7 @@ rule picard_sort_sam_filter_consensus_mapped:
         java_mem=config["resources"]["java_mem"],
         extra="SORT_ORDER=queryname",
     shell:
-        "picard SortSam {params.java_mem} INPUT={input} OUTPUT={output} {params.extra} 2> {log}"
+        "picard SortSam {params.java_mem} INPUT={input.bam} OUTPUT={output} {params.extra} TMP_DIR={input.tmp_dir} 2> {log}"
 
 
 use rule picard_sort_sam_filter_consensus_mapped as picard_sort_sam_filter_consensus_unmapped with:

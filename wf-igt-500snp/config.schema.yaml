@@ -72,3 +72,6 @@ properties:
       java_mem:
         type: string
         description: Java 堆内存限制, 例如 "-Xmx8G"
+      tmp_dir:
+        type: string
+        description: 临时目录路径, 用于存储中间文件
