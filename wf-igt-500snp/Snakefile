@@ -22,7 +22,7 @@ samples_df = pd.read_table(
 samples = samples_df["sample"].tolist()
 
 
-# 定义最终输出结果
+# * 定义最终输出结果
 rule all:
     input:
         "qc/multiqc",
