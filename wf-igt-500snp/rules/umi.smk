@@ -101,6 +101,7 @@ rule picard_merge_bam_alignment:
 rule fgbio_group_reads_by_umi:
     input:
         bam=rules.picard_merge_bam_alignment.output,
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.grouped.bam"),
     benchmark:
@@ -114,13 +115,13 @@ rule fgbio_group_reads_by_umi:
         extra="--strategy=paired --edits=1 --min-map-q=20",
     threads: config["threads"]["medium"]
     shell:
-        "fgbio GroupReadsByUmi {params.java_mem} --threads={threads} --input={input.bam} --output={output} {params.extra} 2> {log}"
+        # ! --tmp-dir 参数需要写在子命令前
+        "fgbio --tmp-dir={input.tmp_dir} GroupReadsByUmi {params.java_mem} --threads={threads} --input={input.bam} --output={output} {params.extra} 2> {log}"
 
 
 rule fgbio_call_duplex_consensus_reads:
     input:
         bam=rules.fgbio_group_reads_by_umi.output,
-        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.consensus.unmapped.bam"),
     benchmark:
@@ -134,7 +135,7 @@ rule fgbio_call_duplex_consensus_reads:
         extra="--error-rate-pre-umi=45 --error-rate-post-umi=30 --min-input-base-quality=30",
     threads: config["threads"]["medium"]
     shell:
-        "fgbio CallDuplexConsensusReads {params.java_mem} --threads={threads} --input={input.bam} --output={output} {params.extra} --tmp-dir={input.tmp_dir} 2> {log}"
+        "fgbio CallDuplexConsensusReads {params.java_mem} --threads={threads} --input={input.bam} --output={output} {params.extra} 2> {log}"
 
 
 rule fgbio_filter_consensus_reads:
@@ -143,7 +144,7 @@ rule fgbio_filter_consensus_reads:
         ref=config["database"]["hg19"],
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.consensus.filtered.unmapped.bam"),
+        temp("align/umi/{sample}.unmapped.consensus.filtered.bam"),
     benchmark:
         ".log/align/umi/{sample}.fgbio_filter_consensus_reads.bm"
     log:
@@ -154,12 +155,13 @@ rule fgbio_filter_consensus_reads:
         java_mem=config["resources"]["java_mem"],
         extra="--min-reads=2 1 1 --max-read-error-rate=0.05 --max-base-error-rate=0.1 --min-base-quality=50 --max-no-calls=0.05",
     shell:
-        "fgbio FilterConsensusReads {params.java_mem} --input={input.bam} --output={output} --ref={input.ref} {params.extra} --tmp-dir={input.tmp_dir} 2> {log}"
+        "fgbio --tmp-dir={input.tmp_dir} FilterConsensusReads {params.java_mem} --input={input.bam} --output={output} --ref={input.ref} {params.extra} 2> {log}"
 
 
 use rule picard_sam_to_fastq as picard_sam_to_fastq_filter_consensus_reads with:
     input:
-        rules.fgbio_filter_consensus_reads.output,
+        bam=rules.fgbio_filter_consensus_reads.output,
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.consensus.filtered.unmapped.Fastq"),
     benchmark:
@@ -202,7 +204,8 @@ rule picard_sort_sam_filter_consensus_mapped:
 
 use rule picard_sort_sam_filter_consensus_mapped as picard_sort_sam_filter_consensus_unmapped with:
     input:
-        rules.fgbio_filter_consensus_reads.output,
+        bam=rules.fgbio_filter_consensus_reads.output,
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.consensus.filtered.unmapped.sorted.bam"),
     benchmark:
@@ -216,6 +219,7 @@ use rule picard_merge_bam_alignment as picard_merge_bam_alignment_filter_consens
         unmapped=rules.picard_sort_sam_filter_consensus_unmapped.output,
         aligned=rules.picard_sort_sam_filter_consensus_mapped.output,
         ref=config["database"]["hg19"],
+        tmp_dir=config["resources"]["tmp_dir"],
     output:
         temp("align/umi/{sample}.mapped.withUMI.consensus.filtered.bam"),
     benchmark:
@@ -244,7 +248,7 @@ rule fgbio_clip_bam:
     shell:
         """
         samtools sort {params.samtools} {input.bam} 2> {log} | \
-            fgbio ClipBam {params.java_mem} {params.fgbio} --input=/dev/stdin --output={output} --ref={input.ref} --tmp-dir={input.tmp_dir} 2>> {log}
+            fgbio --tmp-dir={input.tmp_dir} ClipBam {params.java_mem} {params.fgbio} --input=/dev/stdin --output={output} --ref={input.ref} 2>> {log}
         """
 
 

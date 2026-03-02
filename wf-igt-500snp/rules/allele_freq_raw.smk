@@ -14,7 +14,7 @@ rule mpileup_bcftools_raw:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     params:
-        mpileup="--max-depth 25000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
+        mpileup="--max-depth 100000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
         call="--multiallelic-caller -Ov",
     shell:
         """
@@ -39,7 +39,8 @@ rule extract_500snps_raw:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     shell:
+        # 总深度不要用 DP, DP 是 raw depth, 不是高质量 depth. 总深度使用 %AD 加和
         """
         bcftools view -R {input.anno} {input.vcf} 2> {log} | \
-            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%DP[\t%AD]\n' > {output.txt} 2>> {log}
+            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' > {output.txt} 2>> {log}
         """

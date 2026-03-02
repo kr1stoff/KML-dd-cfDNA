@@ -39,7 +39,8 @@ rule extract_500snps:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     shell:
+        # * 不要 DP, DP 是 raw depth, 不是高质量 depth. total depth 使用 %AD 加和
         """
         bcftools view -R {input.anno} {input.vcf} 2> {log} | \
-            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%DP[\t%AD]\n' > {output.txt} 2>> {log}
+            bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' > {output.txt} 2>> {log}
         """
