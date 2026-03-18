@@ -1,20 +1,20 @@
-rule mpileup_bcftools_raw:
+rule mpileup_bcftools:
     input:
-        bam=rules.bwa_mem_raw.output.bam,
+        bam=rules.sort_umi_bam.output.bam,
         ref=config["database"]["hg19"],
         region=config["database"]["region_slop500bp"],
     output:
-        vcf="snp/raw/{sample}.region.call.vcf.gz",
-        csi="snp/raw/{sample}.region.call.vcf.gz.csi",
+        vcf="snp/umi/{sample}.region.call.vcf.gz",
+        csi="snp/umi/{sample}.region.call.vcf.gz.csi",
     benchmark:
-        ".log/snp/raw/{sample}.mpileup_bcftools_raw.bm"
+        ".log/snp/umi/{sample}.mpileup_bcftools.bm"
     log:
-        ".log/snp/raw/{sample}.mpileup_bcftools_raw.log",
+        ".log/snp/umi/{sample}.mpileup_bcftools.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     params:
-        mpileup="--max-depth 100000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
+        mpileup="--max-depth 25000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
         call="--multiallelic-caller -Ov",
     shell:
         """
@@ -25,21 +25,21 @@ rule mpileup_bcftools_raw:
         """
 
 
-rule extract_500snps_raw:
+rule extract_500snps:
     input:
-        vcf=rules.mpileup_bcftools_raw.output.vcf,
+        vcf=rules.mpileup_bcftools.output.vcf,
         anno=config["database"]["anno_500snp"],
     output:
-        txt="snp/raw/{sample}.500snps.txt",
+        txt="snp/umi/{sample}.500snps.txt",
     benchmark:
-        ".log/snp/raw/{sample}.extract_500snps_raw.bm"
+        ".log/snp/umi/{sample}.extract_500snps.bm"
     log:
-        ".log/snp/raw/{sample}.extract_500snps_raw.log",
+        ".log/snp/umi/{sample}.extract_500snps.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     shell:
-        # 总深度不要用 DP, DP 是 raw depth, 不是高质量 depth. 总深度使用 %AD 加和
+        # * 不要 DP, DP 是 raw depth, 不是高质量 depth. total depth 使用 %AD 加和
         """
         bcftools view -R {input.anno} {input.vcf} 2> {log} | \
             bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' > {output.txt} 2>> {log}

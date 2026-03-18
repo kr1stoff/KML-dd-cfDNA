@@ -6,6 +6,8 @@ conda:
   fastp: basic2
   bwa: ddcfdna
   samtools: ddcfdna
+  fgbio: ddcfdna
+  picard: ddcfdna
   bedtools: ddcfdna
   bcftools: ddcfdna
 
@@ -22,3 +24,10 @@ database:
   region: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.predict.bed
   region_slop500bp: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/probeCov.predictSlop500bp.bed
   anno_500snp: /data/mengxf/GitHub/KML-dd-cfDNA/wf-igt-500snp/assets/loci.anno.vcf
+
+# 运行资源
+resources:
+  # Java 堆内存限制. fgbio/picard 等软件需要设置
+  java_mem: "-Xmx8G"
+  # 临时目录, 用于存储中间文件. DRAGEN 服务器根目录空间极小
+  tmp_dir: /data/mengxf/tmp

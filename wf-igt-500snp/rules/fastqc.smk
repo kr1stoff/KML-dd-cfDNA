@@ -34,8 +34,8 @@ rule multiqc:
 rule fastp:
     input:
         sample=[
-            rules.create_symlinks.output.fq1,
-            rules.create_symlinks.output.fq2,
+            rules.fastq_umi_filter.output.r1,
+            rules.fastq_umi_filter.output.r2,
         ],
     output:
         trimmed=["qc/fastp/{sample}.1.fastq.gz", "qc/fastp/{sample}.2.fastq.gz"],
@@ -72,4 +72,4 @@ rule fq_stats_summary:
     conda:
         config["conda"]["python"]
     script:
-        "../scripts/fq_stats_summary.py"
+        "../scripts/fastq_stats_summary.py"

@@ -1,20 +1,20 @@
-rule mpileup_bcftools:
+rule mpileup_bcftools_raw:
     input:
-        bam=rules.sort_umi_bam.output.bam,
+        bam=rules.bwa_mem_raw.output.bam,
         ref=config["database"]["hg19"],
-        region=config["database"]["region_slop500bp"],
+        region=f"{workflow.basedir}/assets/probeCov.predictSlop500bp.bed",
     output:
-        vcf="snp/umi/{sample}.region.call.vcf.gz",
-        csi="snp/umi/{sample}.region.call.vcf.gz.csi",
+        vcf="snp/raw/{sample}.region.call.vcf.gz",
+        csi="snp/raw/{sample}.region.call.vcf.gz.csi",
     benchmark:
-        ".log/snp/umi/{sample}.mpileup_bcftools.bm"
+        ".log/snp/raw/{sample}.mpileup_bcftools_raw.bm"
     log:
-        ".log/snp/umi/{sample}.mpileup_bcftools.log",
+        ".log/snp/raw/{sample}.mpileup_bcftools_raw.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     params:
-        mpileup="--max-depth 25000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
+        mpileup="--max-depth 100000 --min-MQ 20 --min-BQ 30 --no-BAQ -Ou",
         call="--multiallelic-caller -Ov",
     shell:
         """
@@ -25,21 +25,21 @@ rule mpileup_bcftools:
         """
 
 
-rule extract_500snps:
+rule extract_500snps_raw:
     input:
-        vcf=rules.mpileup_bcftools.output.vcf,
-        anno=config["database"]["anno_500snp"],
+        vcf=rules.mpileup_bcftools_raw.output.vcf,
+        anno=f"{workflow.basedir}/assets/loci.anno.vcf",
     output:
-        txt="snp/umi/{sample}.500snps.txt",
+        txt="snp/raw/{sample}.500snps.txt",
     benchmark:
-        ".log/snp/umi/{sample}.extract_500snps.bm"
+        ".log/snp/raw/{sample}.extract_500snps_raw.bm"
     log:
-        ".log/snp/umi/{sample}.extract_500snps.log",
+        ".log/snp/raw/{sample}.extract_500snps_raw.log",
     conda:
         config["conda"]["bcftools"]
     threads: config["threads"]["medium"]
     shell:
-        # * 不要 DP, DP 是 raw depth, 不是高质量 depth. total depth 使用 %AD 加和
+        # 总深度不要用 DP, DP 是 raw depth, 不是高质量 depth. 总深度使用 %AD 加和
         """
         bcftools view -R {input.anno} {input.vcf} 2> {log} | \
             bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%AD]\n' > {output.txt} 2>> {log}

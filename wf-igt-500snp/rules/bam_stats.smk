@@ -1,7 +1,7 @@
 rule samtools_stats:
     input:
         bam=rules.bwa_mem_raw.output.bam,
-        bed=config["database"]["region"],
+        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
         idx=rules.bwa_mem_raw.output.bai,
     output:
         "align/stats/{sample}.bam.target.stat",
@@ -35,7 +35,7 @@ rule samtools_stats_all:
 rule samtools_depth:
     input:
         bam=rules.bwa_mem_raw.output.bam,
-        bed=config["database"]["region"],
+        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
     output:
         "align/stats/{sample}.bam.target.depth",
     benchmark:

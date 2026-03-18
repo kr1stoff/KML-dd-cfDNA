@@ -8,8 +8,8 @@ sys.stderr = open(snakemake.log[0], "w")
 
 
 def fastp_all_samples_qc(files_fastp_json, out_tsv):
-    title = ["Sample", "RawReads", "RawBases", "CleanReads", "CleanBases", "RawQ20",
-             "RawQ30", "CleanQ20", "CleanQ30", "CleanAverageLength", "GC", "DuplicationRate"]
+    title = ["Sample", "UMIReads", "UMIBases", "CleanReads", "CleanBases", "UMIQ20",
+             "UMIQ30", "CleanQ20", "CleanQ30", "CleanAverageLength", "GC", "DuplicationRate"]
     df = pd.DataFrame(columns=title)
     for js_path in files_fastp_json:
         js_data = json.loads(open(js_path, "r").read())

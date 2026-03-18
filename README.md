@@ -4,11 +4,25 @@
 
 ### 运行
 
-```bash
-snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config samples_tsv=$PWD/tests/example.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130 --rerun-incomplete --scheduler greedy
-```
+- 主流程
+
+  ```bash
+  snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config samples_tsv=$PWD/tests/example.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130 --rerun-incomplete --scheduler greedy
+  ```
+
+- 编译 Rust 程序 (分析流程部署前)
+编译后可执行文件放在 `wf-igt-500snp\tools`
+
+  ```bash
+  cd rust/umi_filter
+  cargo build --release
+  ```
 
 ## 开发说明
+
+20260317
+
+- 使用 Rust 处理原始数据, 过滤不含 UMI 的读取, 并截掉 UMI 部分
 
 20260228
 
@@ -20,4 +34,4 @@ snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config sa
 20260127
 
 - 艾吉泰康UMI
-  IGT_UMI_Adapter_and_UDI_Primer 是 64*64=4096 种 UMI 组合, UMI 长度为 6bp
+  IGT\_UMI\_Adapter\_and\_UDI\_Primer 是 64\*64=4096 种 UMI 组合, UMI 长度为 6bp

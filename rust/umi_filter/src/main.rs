@@ -9,6 +9,7 @@ const MAX_MISMATCH: usize = 1; // 允许的最大错配数
 const UMI_LEN: usize = 6; // UMI 序列长度
 const Q20_THRESHOLD: u8 = 20; // Q20 质量值阈值
 const Q30_THRESHOLD: u8 = 30; // Q30 质量值阈值
+const BUFFER_SIZE: usize = 1024 * 1024; // 设置 1MB 读取缓冲区
 
 /// 从序列中提取 UMI 部分
 ///
@@ -24,7 +25,7 @@ fn extract_umi(seq: &str) -> &str {
 /// 统计质量值字符串中 >= 指定阈值的碱基数
 ///
 /// # 参数
-/// * `qual_str` - 质量值字符串（Phred33 编码）
+/// * `qual_str` - 质量值字符串(Phred33 编码)
 /// * `threshold` - 质量值阈值
 ///
 /// # 返回值
@@ -65,7 +66,7 @@ fn read_umi_list(umi_file_path: &str) -> std::io::Result<Vec<String>> {
 /// 生成允许的 UMI 序列集合
 ///
 /// 该函数会：
-/// 1. 生成所有 UMI 序列的组合（每个 UMI 与其他所有 UMI 组合）
+/// 1. 生成所有 UMI 序列的组合(每个 UMI 与其他所有 UMI 组合)
 /// 2. 为每个组合生成允许 1 个错配的变体
 /// 3. 返回一个 HashMap，键为允许的序列，值为对应的原始序列
 ///
@@ -82,7 +83,7 @@ fn generate_allowed(umi_list: &[String]) -> HashMap<String, String> {
     let whitelist_capacity = umi_list.len() * umi_list.len();
     let mut whitelist = HashSet::with_capacity(whitelist_capacity);
 
-    // 生成所有可能的 UMI 组合（u1 + u2）
+    // 生成所有可能的 UMI 组合(u1 + u2)
     for u1 in umi_list {
         for u2 in umi_list {
             whitelist.insert(format!("{}{}", u1, u2));
@@ -108,7 +109,7 @@ fn generate_allowed(umi_list: &[String]) -> HashMap<String, String> {
                 // 尝试替换为其他碱基
                 for n in &nucs {
                     if *n != chars[i] {
-                        // 创建新的序列（替换一个碱基）
+                        // 创建新的序列(替换一个碱基)
                         let mut new_chars = chars.clone();
                         new_chars[i] = *n;
                         let neighbor: String = new_chars.iter().collect();
@@ -121,7 +122,7 @@ fn generate_allowed(umi_list: &[String]) -> HashMap<String, String> {
     }
 
     // 打印允许的序列总数
-    println!("允许序列总数（含1 mismatch邻居）: {}", allowed.len());
+    println!("允许序列总数(含1 mismatch邻居): {}", allowed.len());
 
     allowed
 }
@@ -159,16 +160,16 @@ fn filter_fastq(
     let r2_file = File::open(r2_path)?;
 
     // 创建缓冲读取器
-    let r1_reader = BufReader::new(r1_file);
-    let r2_reader = BufReader::new(r2_file);
+    let r1_reader = BufReader::with_capacity(BUFFER_SIZE, r1_file);
+    let r2_reader = BufReader::with_capacity(BUFFER_SIZE, r2_file);
 
     // 创建未压缩的输出文件
     let out1 = File::create(r1_out_path)?;
     let out2 = File::create(r2_out_path)?;
 
     // 创建缓冲写入器
-    let mut out1 = BufWriter::new(out1);
-    let mut out2 = BufWriter::new(out2);
+    let mut out1 = BufWriter::with_capacity(BUFFER_SIZE, out1);
+    let mut out2 = BufWriter::with_capacity(BUFFER_SIZE, out2);
 
     // 创建行迭代器
     let mut r1_lines = r1_reader.lines();
@@ -186,13 +187,13 @@ fn filter_fastq(
 
     // 循环处理每对读取
     loop {
-        // 读取 R1 的第一行（标题行）
+        // 读取 R1 的第一行(标题行)
         let r1 = match r1_lines.next() {
             Some(v) => v?, // 解析结果，处理可能的错误
             None => break, // 文件结束，退出循环
         };
 
-        // 读取 R1 的剩余三行（序列、+、质量值）
+        // 读取 R1 的剩余三行(序列、+、质量值)
         let r1_seq = r1_lines.next().unwrap()?;
         let r1_plus = r1_lines.next().unwrap()?;
         let r1_qual = r1_lines.next().unwrap()?;
@@ -220,16 +221,16 @@ fn filter_fastq(
 
         // 检查是否在允许列表中
         if allowed.contains_key(&combined) {
-            // 写入符合条件的读取到输出文件
+            // 写入符合条件的读取到输出文件(切掉 UMI 部分)
             writeln!(out1, "{}", r1)?;
-            writeln!(out1, "{}", r1_seq)?;
+            writeln!(out1, "{}", &r1_seq[UMI_LEN..])?; // 切掉前 6bp UMI
             writeln!(out1, "{}", r1_plus)?;
-            writeln!(out1, "{}", r1_qual)?;
+            writeln!(out1, "{}", &r1_qual[UMI_LEN..])?; // 切掉前 6bp 质量值
 
             writeln!(out2, "{}", r2)?;
-            writeln!(out2, "{}", r2_seq)?;
+            writeln!(out2, "{}", &r2_seq[UMI_LEN..])?; // 切掉前 6bp UMI
             writeln!(out2, "{}", r2_plus)?;
-            writeln!(out2, "{}", r2_qual)?;
+            writeln!(out2, "{}", &r2_qual[UMI_LEN..])?; // 切掉前 6bp 质量值
 
             // 增加保留计数
             kept_reads += 1;

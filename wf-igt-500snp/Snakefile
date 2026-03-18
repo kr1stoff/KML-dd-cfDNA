@@ -26,17 +26,16 @@ samples = samples_df["sample"].tolist()
 rule all:
     input:
         "qc/multiqc",
-        "upload/panel-qc-summary.tsv",
-        expand("snp/raw/{sample}.500snps.txt", sample=samples),
-        expand("snp/umi/{sample}.500snps.txt", sample=samples),
+        # "upload/panel-qc-summary.tsv",
+        # expand("snp/raw/{sample}.500snps.txt", sample=samples),
+        # TODO 测试后删除
+        expand("qc/umi/{sample}.umi.stats.txt", sample=samples),
 
 
 # 导入公共规则
 include: "rules/rawdata.smk"
+include: "rules/fastq_umi.smk"
 include: "rules/fastqc.smk"
-include: "rules/umi.smk"
-include: "rules/bam_stats.smk"
-# TODO 删除. 测试原始数据和UMI数据等位频率是否一致
-include: "rules/allele_freq_raw.smk"
-include: "rules/allele_freq.smk"
-include: "rules/summary.smk"
+# include: "rules/bam_stats.smk"
+# include: "rules/allele_freq.smk"
+# include: "rules/summary.smk"
