@@ -26,16 +26,14 @@ samples = samples_df["sample"].tolist()
 rule all:
     input:
         "qc/multiqc",
-        # "upload/panel-qc-summary.tsv",
+        "upload/panel-qc-summary.tsv",
         # expand("snp/raw/{sample}.500snps.txt", sample=samples),
-        # TODO 测试后删除
-        "qc/fastq_stats_summary.tsv",
 
 
 # 导入公共规则
 include: "rules/rawdata.smk"
 include: "rules/fastq_umi.smk"
 include: "rules/fastqc.smk"
-# include: "rules/bam_stats.smk"
+include: "rules/alignment.smk"
 # include: "rules/allele_freq.smk"
-# include: "rules/summary.smk"
+include: "rules/summary.smk"

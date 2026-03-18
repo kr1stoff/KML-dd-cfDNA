@@ -1,8 +1,47 @@
+rule bwa_mem:
+    input:
+        fq=rules.fastp.output.trimmed,
+        ref=config["database"]["hg19"],
+    output:
+        temp("align/{sample}.sam"),
+    benchmark:
+        ".log/align/bwa/{sample}.bwa_mem.bm"
+    log:
+        ".log/align/bwa/{sample}.bwa_mem.log",
+    conda:
+        config["conda"]["bwa"]
+    threads: config["threads"]["medium"]
+    params:
+        extra=r"-M -Y -R '@RG\tID:{sample}\tSM:{sample}\tPL:ILLUMINA'",
+    shell:
+        "bwa mem -t {threads} {params.extra} {input.ref} {input.fq} -o {output} 2> {log}"
+
+
+rule samtools_sort_and_index:
+    input:
+        rules.bwa_mem.output,
+    output:
+        bam="align/bwa/{sample}.bam",
+        bai="align/bwa/{sample}.bam.bai",
+    benchmark:
+        ".log/align/bwa/{sample}.samtools_sort_and_index.bm"
+    log:
+        ".log/align/bwa/{sample}.samtools_sort_and_index.log",
+    conda:
+        config["conda"]["samtools"]
+    threads: config["threads"]["medium"]
+    shell:
+        """
+        samtools sort -o {output.bam} {input} 2> {log}
+        samtools index {output.bam} 2>> {log}
+        """
+
+
 rule samtools_stats:
     input:
-        bam=rules.bwa_mem_raw.output.bam,
+        bam=rules.samtools_sort_and_index.output.bam,
         bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
-        idx=rules.bwa_mem_raw.output.bai,
+        idx=rules.samtools_sort_and_index.output.bai,
     output:
         "align/stats/{sample}.bam.target.stat",
     benchmark:
@@ -18,7 +57,7 @@ rule samtools_stats:
 
 rule samtools_stats_all:
     input:
-        rules.bwa_mem_raw.output.bam,
+        rules.samtools_sort_and_index.output.bam,
     output:
         "align/stats/{sample}.bam.stat",
     benchmark:
@@ -34,7 +73,7 @@ rule samtools_stats_all:
 
 rule samtools_depth:
     input:
-        bam=rules.bwa_mem_raw.output.bam,
+        bam=rules.samtools_sort_and_index.output.bam,
         bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
     output:
         "align/stats/{sample}.bam.target.depth",

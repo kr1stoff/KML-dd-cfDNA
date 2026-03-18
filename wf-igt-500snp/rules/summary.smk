@@ -1,6 +1,6 @@
 rule all_qc_summary:
     input:
-        rules.fq_stats_summary.output,
+        rules.fastq_stats_summary.output,
         rules.bam_stats_summary.output,
     output:
         "upload/panel-qc-summary.tsv",

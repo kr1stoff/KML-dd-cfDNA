@@ -7,7 +7,7 @@
 - 主流程
 
   ```bash
-  snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config samples_tsv=$PWD/tests/example.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130 --rerun-incomplete --scheduler greedy
+  snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda --config samples_tsv=$PWD/wf-igt-500snp/tests/example.tsv --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130 --rerun-incomplete --scheduler greedy
   ```
 
 - 编译 Rust 程序 (分析流程部署前)
