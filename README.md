@@ -11,7 +11,7 @@
   ```
 
 - 编译 Rust 程序 (分析流程部署前)
-编译后可执行文件放在 `wf-igt-500snp\tools`
+编译后可执行文件软连接到 `wf-igt-500snp\tools`
 
   ```bash
   cd rust/umi_filter

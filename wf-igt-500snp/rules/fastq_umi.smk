@@ -39,9 +39,9 @@ rule fastq_umi_filter:
     log:
         ".log/qc/umi/{sample}.fastq_umi_filter.log",
     params:
-        umi_filter=f"{workflow.basedir}/tools/umi_filter",
+        rust_umi_filter=f"{workflow.basedir}/tools/rust_umi_filter",
     shell:
-        "{params.umi_filter} {input.r1} {input.r2} {output.r1} {output.r2} {input.umi_file} {output.stats} 2> {log}"
+        "{params.rust_umi_filter} {input.r1} {input.r2} {output.r1} {output.r2} {input.umi_file} {output.stats} 2> {log}"
 
 
 rule fastq_umi_stats_summary:

@@ -254,8 +254,8 @@ fn filter_fastq(
     let mut stats_file = File::create(stats_out_path)?;
     writeln!(stats_file, "RawReads: {}", total_reads)?;
     writeln!(stats_file, "RawBases: {}", total_bases)?;
-    writeln!(stats_file, "RawQ20: {:.4}", q20_ratio)?;
-    writeln!(stats_file, "RawQ30: {:.4}", q30_ratio)?;
+    writeln!(stats_file, "RawQ20: {:.6}", q20_ratio)?;
+    writeln!(stats_file, "RawQ30: {:.6}", q30_ratio)?;
 
     // 打印过滤结果
     println!(
@@ -264,7 +264,7 @@ fn filter_fastq(
         kept_reads,
         total_reads - kept_reads
     );
-    println!("Q20 比例: {:.4}, Q30 比例: {:.4}", q20_ratio, q30_ratio);
+    println!("Q20 比例: {:.6}, Q30 比例: {:.6}", q20_ratio, q30_ratio);
 
     Ok(())
 }

@@ -1,38 +1,14 @@
-import sys
-from pathlib import Path
-import json
 import pandas as pd
-import numpy as np
+import sys
 
+# 将标准错误输出重定向到Snakemake日志文件
 sys.stderr = open(snakemake.log[0], "w")
 
+umi_stats_file = snakemake.input.umi[0]
+fastp_stats_file = snakemake.input.fastp[0]
 
-def fastp_all_samples_qc(files_fastp_json, out_tsv):
-    title = ["Sample", "UMIReads", "UMIBases", "CleanReads", "CleanBases", "UMIQ20",
-             "UMIQ30", "CleanQ20", "CleanQ30", "CleanAverageLength", "GC", "DuplicationRate"]
-    df = pd.DataFrame(columns=title)
-    for js_path in files_fastp_json:
-        js_data = json.loads(open(js_path, "r").read())
-        sample = Path(js_path).stem
-        mean_lengths = np.array(
-            [v for k, v in js_data["summary"]["after_filtering"].items() if k.endswith("mean_length")])
-        out = [
-            sample,
-            js_data["summary"]["before_filtering"]["total_reads"],
-            js_data["summary"]["before_filtering"]["total_bases"],
-            js_data["summary"]["after_filtering"]["total_reads"],
-            js_data["summary"]["after_filtering"]["total_bases"],
-            js_data["summary"]["before_filtering"]["q20_rate"],
-            js_data["summary"]["before_filtering"]["q30_rate"],
-            js_data["summary"]["after_filtering"]["q20_rate"],
-            js_data["summary"]["after_filtering"]["q30_rate"],
-            int(mean_lengths.mean()),
-            js_data["summary"]["after_filtering"]["gc_content"],
-            js_data["duplication"]["rate"],
-        ]
-        df.loc[len(df)] = out
-    df.to_csv(out_tsv, index=False, sep="\t")
+df_umi = pd.read_csv(umi_stats_file, sep='\t', index_col='Sample')
+df_fastp = pd.read_csv(fastp_stats_file, sep='\t', index_col='Sample')
 
-
-if __name__ == "__main__":
-    fastp_all_samples_qc(snakemake.input, snakemake.output[0])
+df_merged = pd.merge(df_umi, df_fastp, left_index=True, right_index=True)
+df_merged.to_csv(snakemake.output[0], sep='\t')

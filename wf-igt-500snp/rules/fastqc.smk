@@ -60,15 +60,31 @@ rule fastp:
         """
 
 
-rule fq_stats_summary:
+rule fastp_stats_summary:
     input:
         expand("qc/fastp/{sample}.json", sample=samples),
     output:
-        "qc/fastp/fq_summary.tsv",
+        "qc/fastp/fastp_summary.tsv",
     benchmark:
-        ".log/qc/fastp/fq_all_samples_qc.bm"
+        ".log/qc/fastp/fastp_stats_summary.bm"
     log:
-        ".log/qc/fastp/fq_all_samples_qc.log",
+        ".log/qc/fastp/fastp_stats_summary.log",
+    conda:
+        config["conda"]["python"]
+    script:
+        "../scripts/fastp_stats_summary.py"
+
+
+rule fastq_stats_summary:
+    input:
+        umi=rules.fastq_umi_stats_summary.output,
+        fastp=rules.fastp_stats_summary.output,
+    output:
+        "qc/fastq_stats_summary.tsv",
+    benchmark:
+        ".log/qc/fastq_stats_summary.bm"
+    log:
+        ".log/qc/fastq_stats_summary.log",
     conda:
         config["conda"]["python"]
     script:

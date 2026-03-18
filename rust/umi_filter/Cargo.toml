@@ -1,5 +1,5 @@
 [package]
-name = "umi_filter"
+name = "rust_umi_filter"
 version = "0.1.0"
 edition = "2021"
 

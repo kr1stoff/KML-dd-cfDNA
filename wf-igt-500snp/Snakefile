@@ -29,7 +29,7 @@ rule all:
         # "upload/panel-qc-summary.tsv",
         # expand("snp/raw/{sample}.500snps.txt", sample=samples),
         # TODO 测试后删除
-        expand("qc/umi/{sample}.umi.stats.txt", sample=samples),
+        "qc/fastq_stats_summary.tsv",
 
 
 # 导入公共规则
