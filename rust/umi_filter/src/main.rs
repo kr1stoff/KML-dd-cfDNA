@@ -252,11 +252,10 @@ fn filter_fastq(
 
     // 输出统计信息到文件
     let mut stats_file = File::create(stats_out_path)?;
-    writeln!(stats_file, "total_reads: {}", total_reads)?;
-    writeln!(stats_file, "kept_reads: {}", kept_reads)?;
-    writeln!(stats_file, "total_bases: {}", total_bases)?;
-    writeln!(stats_file, "q20: {:.4}", q20_ratio)?;
-    writeln!(stats_file, "q30: {:.4}", q30_ratio)?;
+    writeln!(stats_file, "RawReads: {}", total_reads)?;
+    writeln!(stats_file, "RawBases: {}", total_bases)?;
+    writeln!(stats_file, "RawQ20: {:.4}", q20_ratio)?;
+    writeln!(stats_file, "RawQ30: {:.4}", q30_ratio)?;
 
     // 打印过滤结果
     println!(

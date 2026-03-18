@@ -2,7 +2,7 @@ rule fastq_umi_pigz_decompress:
     input:
         rules.create_symlinks.output.fq1,
     output:
-        "qc/umi/{sample}.1.fastq",
+        temp("qc/umi/{sample}.1.fastq"),
     benchmark:
         ".log/qc/umi/{sample}.pigz_decompress.bm"
     log:
@@ -16,7 +16,7 @@ use rule fastq_umi_pigz_decompress as fastq_umi_pigz_decompress_r2 with:
     input:
         rules.create_symlinks.output.fq2,
     output:
-        "qc/umi/{sample}.2.fastq",
+        temp("qc/umi/{sample}.2.fastq"),
     benchmark:
         ".log/qc/umi/{sample}.pigz_decompress.bm"
     log:
@@ -29,15 +29,15 @@ rule fastq_umi_filter:
         r2=rules.fastq_umi_pigz_decompress_r2.output,
         umi_file=f"{workflow.basedir}/assets/umi.txt",
     output:
-        r1="qc/umi/{sample}.umi.1.fastq",
-        r2="qc/umi/{sample}.umi.2.fastq",
+        r1=temp("qc/umi/{sample}.umi.1.fastq"),
+        r2=temp("qc/umi/{sample}.umi.2.fastq"),
         stats="qc/umi/{sample}.umi.stats.txt",
     message:
         "Filtering UMI for {input.r1} and {input.r2} to {output.r1} and {output.r2} with {input.umi_file} and {output.stats}"
     benchmark:
-        ".log/qc/umi/{sample}.fastqc_umi.bm"
+        ".log/qc/umi/{sample}.fastq_umi_filter.bm"
     log:
-        ".log/qc/umi/{sample}.fastqc_umi.log",
+        ".log/qc/umi/{sample}.fastq_umi_filter.log",
     params:
         umi_filter=f"{workflow.basedir}/tools/umi_filter",
     shell:
