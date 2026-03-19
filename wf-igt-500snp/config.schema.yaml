@@ -26,7 +26,9 @@ properties:
         type: string
       bcftools:
         type: string
-      bedtools:
+      gatk:
+        type: string
+      lofreq:
         type: string
     additionalProperties: true
   threads:

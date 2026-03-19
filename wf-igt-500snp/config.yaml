@@ -4,10 +4,11 @@ conda:
   fastqc: basic
   multiqc: basic
   fastp: basic2
-  bwa: ddcfdna
-  samtools: ddcfdna
-  bedtools: ddcfdna
-  bcftools: ddcfdna
+  bwa: basic
+  samtools: basic
+  bcftools: basic
+  gatk: basic
+  lofreq: basic
 
 # 线程数配置
 threads:

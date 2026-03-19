@@ -19,7 +19,7 @@ rule bwa_mem:
 
 rule samtools_sort_and_index:
     input:
-        rules.bwa_mem.output,
+        sam=rules.bwa_mem.output,
     output:
         bam="align/bwa/{sample}.bam",
         bai="align/bwa/{sample}.bam.bai",
@@ -32,88 +32,31 @@ rule samtools_sort_and_index:
     threads: config["threads"]["medium"]
     shell:
         """
-        samtools sort -o {output.bam} {input} 2> {log}
+        samtools sort -o {output.bam} {input.sam} 2> {log}
         samtools index {output.bam} 2>> {log}
         """
 
 
-rule samtools_stats:
+rule mark_duplicates:
     input:
-        bam=rules.samtools_sort_and_index.output.bam,
-        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
-        idx=rules.samtools_sort_and_index.output.bai,
+        bam=rule.samtools_sort_and_index.output.bam,
     output:
-        "align/stats/{sample}.bam.target.stat",
-    benchmark:
-        ".log/align/stats/{sample}.samtools_stats.bm"
+        bam=temp("align/markdup/{sample}.md.bam"),  # 标记后的中间文件，建议设为temp
+        metrics="align/markdup/{sample}.md_metrics.txt"
     log:
-        ".log/align/stats/{sample}.samtools_stats.log",
+        ".log/align/markdup/{sample}.mark_duplicates.log"
+    benchmark:
+        ".log/align/markdup/{sample}.mark_duplicates.bm"
     conda:
-        config["conda"]["samtools"]
+        config["conda"]["gatk"]
     threads: config["threads"]["low"]
     shell:
-        "samtools stats --threads {threads} --target-regions {input.bed} {input.bam} > {output} 2> {log}"
-
-
-rule samtools_stats_all:
-    input:
-        rules.samtools_sort_and_index.output.bam,
-    output:
-        "align/stats/{sample}.bam.stat",
-    benchmark:
-        ".log/align/stats/{sample}.samtools_stats_all.bm"
-    log:
-        ".log/align/stats/{sample}.samtools_stats_all.log",
-    conda:
-        config["conda"]["samtools"]
-    threads: config["threads"]["low"]
-    shell:
-        "samtools stats --threads {threads} {input} > {output} 2> {log}"
-
-
-rule samtools_depth:
-    input:
-        bam=rules.samtools_sort_and_index.output.bam,
-        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
-    output:
-        "align/stats/{sample}.bam.target.depth",
-    benchmark:
-        ".log/align/stats/{sample}.samtools_depth.bm"
-    log:
-        ".log/align/stats/{sample}.samtools_depth.log",
-    conda:
-        config["conda"]["samtools"]
-    shell:
-        "samtools depth -a -b {input.bed} {input.bam} > {output} 2> {log}"
-
-
-rule bam_stats:
-    input:
-        rules.samtools_stats_all.output,
-        rules.samtools_stats.output,
-        rules.samtools_depth.output,
-    output:
-        "align/stats/{sample}.stats.csv",
-    benchmark:
-        ".log/align/stats/{sample}.bam_stats.bm"
-    log:
-        ".log/align/stats/{sample}.bam_stats.log",
-    conda:
-        config["conda"]["python"]
-    script:
-        "../scripts/bam_stats.py"
-
-
-rule bam_stats_summary:
-    input:
-        expand("align/stats/{sample}.stats.csv", sample=samples),
-    output:
-        "align/stats/bam_summary.tsv",
-    benchmark:
-        ".log/align/stats/bam_stats_summary.bm"
-    log:
-        ".log/align/stats/bam_stats_summary.log",
-    conda:
-        config["conda"]["python"]
-    script:
-        "../scripts/bam_stats_summary.py"
+        """
+        gatk MarkDuplicates \
+            -I {input.bam} \
+            -O {output.bam} \
+            -M {output.metrics} \
+            --REMOVE_DUPLICATES false \
+            --CREATE_INDEX true \
+            --VALIDATION_STRINGENCY SILENT > {log} 2>&1
+        """
