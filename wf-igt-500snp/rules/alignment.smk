@@ -3,7 +3,7 @@ rule bwa_mem:
         fq=rules.fastp.output.trimmed,
         ref=config["database"]["hg19"],
     output:
-        temp("align/{sample}.sam"),
+        temp("align/bwa/{sample}.sam"),
     benchmark:
         ".log/align/bwa/{sample}.bwa_mem.bm"
     log:
@@ -19,7 +19,7 @@ rule bwa_mem:
 
 rule samtools_sort_and_index:
     input:
-        sam=rules.bwa_mem.output,
+        rules.bwa_mem.output,
     output:
         bam="align/bwa/{sample}.bam",
         bai="align/bwa/{sample}.bam.bai",
@@ -32,19 +32,19 @@ rule samtools_sort_and_index:
     threads: config["threads"]["medium"]
     shell:
         """
-        samtools sort -o {output.bam} {input.sam} 2> {log}
+        samtools sort -o {output.bam} {input} 2> {log}
         samtools index {output.bam} 2>> {log}
         """
 
 
 rule mark_duplicates:
     input:
-        bam=rule.samtools_sort_and_index.output.bam,
+        bam=rules.samtools_sort_and_index.output.bam,
     output:
         bam=temp("align/markdup/{sample}.md.bam"),  # 标记后的中间文件，建议设为temp
-        metrics="align/markdup/{sample}.md_metrics.txt"
+        metrics="align/markdup/{sample}.md_metrics.txt",
     log:
-        ".log/align/markdup/{sample}.mark_duplicates.log"
+        ".log/align/markdup/{sample}.mark_duplicates.log",
     benchmark:
         ".log/align/markdup/{sample}.mark_duplicates.bm"
     conda:

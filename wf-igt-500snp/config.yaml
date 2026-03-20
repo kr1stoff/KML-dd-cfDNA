@@ -9,6 +9,7 @@ conda:
   bcftools: basic
   gatk: basic
   lofreq: basic
+  vt: basic2
 
 # 线程数配置
 threads:
