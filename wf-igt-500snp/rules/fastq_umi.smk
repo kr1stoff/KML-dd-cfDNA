@@ -29,8 +29,8 @@ rule fastq_umi_filter:
         r2=rules.fastq_umi_pigz_decompress_r2.output,
         umi_file=f"{workflow.basedir}/assets/umi.txt",
     output:
-        r1=temp("qc/umi/{sample}.umi.1.fastq"),
-        r2=temp("qc/umi/{sample}.umi.2.fastq"),
+        r1="qc/umi/{sample}.umi.1.fastq",
+        r2="qc/umi/{sample}.umi.2.fastq",
         stats="qc/umi/{sample}.umi.stats.txt",
     message:
         "Filtering UMI for {input.r1} and {input.r2} to {output.r1} and {output.r2} with {input.umi_file} and {output.stats}"

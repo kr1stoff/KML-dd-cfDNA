@@ -4,7 +4,7 @@ rule picard_fastq_to_sam:
         fq2=rules.fastp.output.trimmed[1],
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.unmapped.bam"),
+        "align/umi/{sample}.unmapped.bam",
     benchmark:
         ".log/align/umi/{sample}.picard_fastq_to_sam.bm"
     log:
@@ -21,7 +21,7 @@ rule fgbio_extract_umis:
     input:
         bam=rules.picard_fastq_to_sam.output,
     output:
-        temp("align/umi/{sample}.unmapped.withUMI.bam"),
+        "align/umi/{sample}.unmapped.withUMI.bam",
     benchmark:
         ".log/align/umi/{sample}.fgbio_extract_umis.bm"
     log:
@@ -40,7 +40,7 @@ rule picard_sam_to_fastq:
         bam=rules.fgbio_extract_umis.output,
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.SamToFastq"),
+        "align/umi/{sample}.SamToFastq",
     benchmark:
         ".log/align/umi/{sample}.picard_sam_to_fastq.bm"
     log:
@@ -84,7 +84,7 @@ rule picard_merge_bam_alignment:
         ref=config["database"]["hg19"],
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.mapped.withUMI.bam"),
+        "align/umi/{sample}.mapped.withUMI.bam",
     benchmark:
         ".log/align/umi/{sample}.picard_merge_bam_alignment.bm"
     log:
@@ -103,7 +103,7 @@ rule fgbio_group_reads_by_umi:
         bam=rules.picard_merge_bam_alignment.output,
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.grouped.bam"),
+        "align/umi/{sample}.grouped.bam",
     benchmark:
         ".log/align/umi/{sample}.fgbio_group_reads_by_umi.bm"
     log:
@@ -123,7 +123,7 @@ rule fgbio_call_duplex_consensus_reads:
     input:
         bam=rules.fgbio_group_reads_by_umi.output,
     output:
-        temp("align/umi/{sample}.consensus.unmapped.bam"),
+        "align/umi/{sample}.consensus.unmapped.bam",
     benchmark:
         ".log/align/umi/{sample}.fgbio_call_duplex_consensus_reads.bm"
     log:
@@ -144,7 +144,7 @@ rule fgbio_filter_consensus_reads:
         ref=config["database"]["hg19"],
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.unmapped.consensus.filtered.bam"),
+        "align/umi/{sample}.unmapped.consensus.filtered.bam",
     benchmark:
         ".log/align/umi/{sample}.fgbio_filter_consensus_reads.bm"
     log:
@@ -163,7 +163,7 @@ use rule picard_sam_to_fastq as picard_sam_to_fastq_filter_consensus_reads with:
         bam=rules.fgbio_filter_consensus_reads.output,
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.consensus.filtered.unmapped.Fastq"),
+        "align/umi/{sample}.consensus.filtered.unmapped.Fastq",
     benchmark:
         ".log/align/umi/{sample}.picard_sam_to_fastq_filter_consensus_reads.bm"
     log:
@@ -175,8 +175,8 @@ use rule bwa_mem_raw as bwa_mem_filter_consensus_reads with:
         fq=rules.picard_sam_to_fastq_filter_consensus_reads.output,
         ref=config["database"]["hg19"],
     output:
-        bam=temp("align/umi/{sample}.consensus.filtered.mapped.bam"),
-        bai=temp("align/umi/{sample}.consensus.filtered.mapped.bam.bai"),
+        bam="align/umi/{sample}.consensus.filtered.mapped.bam",
+        bai="align/umi/{sample}.consensus.filtered.mapped.bam.bai",
     benchmark:
         ".log/align/umi/{sample}.bwa_mem_filter_consensus_reads.bm"
     log:
@@ -188,7 +188,7 @@ rule picard_sort_sam_filter_consensus_mapped:
         bam=rules.bwa_mem_filter_consensus_reads.output.bam,
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.consensus.filtered.mapped.sorted.bam"),
+        "align/umi/{sample}.consensus.filtered.mapped.sorted.bam",
     benchmark:
         ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_mapped.bm"
     log:
@@ -207,7 +207,7 @@ use rule picard_sort_sam_filter_consensus_mapped as picard_sort_sam_filter_conse
         bam=rules.fgbio_filter_consensus_reads.output,
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.consensus.filtered.unmapped.sorted.bam"),
+        "align/umi/{sample}.consensus.filtered.unmapped.sorted.bam",
     benchmark:
         ".log/align/umi/{sample}.picard_sort_sam_filter_consensus_unmapped.bm"
     log:
@@ -221,7 +221,7 @@ use rule picard_merge_bam_alignment as picard_merge_bam_alignment_filter_consens
         ref=config["database"]["hg19"],
         tmp_dir=config["resources"]["tmp_dir"],
     output:
-        temp("align/umi/{sample}.mapped.withUMI.consensus.filtered.bam"),
+        "align/umi/{sample}.mapped.withUMI.consensus.filtered.bam",
     benchmark:
         ".log/align/umi/{sample}.picard_merge_bam_alignment_filter_consensus_reads.bm"
     log:

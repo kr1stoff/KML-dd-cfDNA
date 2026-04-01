@@ -3,7 +3,7 @@ rule lofreq_preprocess:
         bam=rules.mark_duplicates.output.bam,
         ref=config["database"]["hg19"],
     output:
-        bam=temp("align/lofreq/{sample}.lofreq_ready.bam"),
+        bam="align/lofreq/{sample}.lofreq_ready.bam",
     log:
         ".log/align/lofreq/{sample}.lofreq_prep.log",
     benchmark:

@@ -3,7 +3,7 @@ rule bwa_mem:
         fq=rules.fastp.output.trimmed,
         ref=config["database"]["hg19"],
     output:
-        temp("align/bwa/{sample}.sam"),
+        "align/bwa/{sample}.sam",
     benchmark:
         ".log/align/bwa/{sample}.bwa_mem.bm"
     log:
@@ -41,7 +41,7 @@ rule mark_duplicates:
     input:
         bam=rules.samtools_sort_and_index.output.bam,
     output:
-        bam=temp("align/markdup/{sample}.md.bam"),  # 标记后的中间文件，建议设为temp
+        bam="align/markdup/{sample}.md.bam",  # 标记后的中间文件
         metrics="align/markdup/{sample}.md_metrics.txt",
     log:
         ".log/align/markdup/{sample}.mark_duplicates.log",
