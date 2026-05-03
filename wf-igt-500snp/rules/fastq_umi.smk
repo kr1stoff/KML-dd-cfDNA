@@ -23,6 +23,10 @@ use rule fastq_umi_pigz_decompress as fastq_umi_pigz_decompress_r2 with:
         ".log/qc/umi/{sample}.pigz_decompress.log",
 
 
+"""
+
+该 AI 生成脚本已经过人工核对, 确认无误
+"""
 rule fastq_umi_filter:
     input:
         r1=rules.fastq_umi_pigz_decompress.output,

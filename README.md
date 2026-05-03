@@ -28,10 +28,10 @@
 
 - 不再使用 fgbio umi consensus 方式, 使用原始数据直接分析
   fgbio umi consensus 分析流程灵敏度无法达到 < 1%, 1% VAF 以下非常不准确
-- 不再使用 `bcftools` 算 VCF, 改用低频变异专用的 `Mutect2`
-  IGV 核对原始比对 BAM 时发现, 很多 10% VAF 的变异都被
+- 不再使用 `bcftools` 算 VCF, 改用 `LoFreq`
+  IGV 核对原始比对 BAM 时发现, 很多 10% VAF 的变异都被过滤掉了
 
 20260127
 
 - 艾吉泰康UMI
-  IGT\_UMI\_Adapter\_and\_UDI\_Primer 是 64\*64=4096 种 UMI 组合, UMI 长度为 6bp
+  IGT_UMI_Adapter_and_UDI_Pimer 是 64*64=4096 种 UMI 组合, UMI 长度为 6bp
