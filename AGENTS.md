@@ -14,7 +14,6 @@ snakemake --cores 32 --snakefile wf-igt-500snp/Snakefile --use-conda \
 
 # 编译 Rust UMI 过滤工具（部署前执行）
 cd rust/umi_filter && cargo build --release
-# 编译后软链接到 wf-igt-500snp/tools/rust_umi_filter
 ```
 
 ## 目录结构

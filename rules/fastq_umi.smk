@@ -43,7 +43,7 @@ rule fastq_umi_filter:
     log:
         ".log/qc/umi/{sample}.fastq_umi_filter.log",
     params:
-        rust_umi_filter=f"{workflow.basedir}/tools/rust_umi_filter",
+        rust_umi_filter=f"{workflow.basedir}/rust/umi_filter/target/release/rust_umi_filter",
     shell:
         "{params.rust_umi_filter} {input.r1} {input.r2} {output.r1} {output.r2} {input.umi_file} {output.stats} 2> {log}"
 
