@@ -37,26 +37,81 @@ rule samtools_sort_and_index:
         """
 
 
-rule mark_duplicates:
+# BQSR 校正
+rule recalibrate_base_qualities:
     input:
         bam=rules.samtools_sort_and_index.output.bam,
+        bai=rules.samtools_sort_and_index.output.bai,
+        ref=config["database"]["hg19"],
+        gatk_dict=config["database"]["gatk_dict"],
+        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
+        known=[
+            config["database"]["known_site_1000g"],
+            config["database"]["known_site_dbsnp"],
+            config["database"]["known_site_mills"],
+        ],
+        known_idx=[
+            config["database"]["known_site_1000g_idx"],
+            config["database"]["known_site_dbsnp_idx"],
+            config["database"]["known_site_mills_idx"],
+        ],
     output:
-        bam="align/markdup/{sample}.md.bam",  # 标记后的中间文件
-        metrics="align/markdup/{sample}.md_metrics.txt",
-    log:
-        ".log/align/markdup/{sample}.mark_duplicates.log",
+        recal_table="align/bqsr/{sample}-recal.grp",
     benchmark:
-        ".log/align/markdup/{sample}.mark_duplicates.bm"
+        ".log/align/bqsr/{sample}.recalibrate_base_qualities.bm"
+    log:
+        ".log/align/bqsr/{sample}.recalibrate_base_qualities.log",
     conda:
         config["conda"]["gatk"]
-    threads: config["threads"]["low"]
     shell:
         """
-        gatk MarkDuplicates \
-            -I {input.bam} \
-            -O {output.bam} \
-            -M {output.metrics} \
-            --REMOVE_DUPLICATES false \
-            --CREATE_INDEX true \
-            --VALIDATION_STRINGENCY SILENT > {log} 2>&1
+        gatk BaseRecalibrator \
+            --input {input.bam} \
+            --reference {input.ref} \
+            --known-sites {input.known[0]} \
+            --known-sites {input.known[1]} \
+            --known-sites {input.known[2]} \
+            --intervals {input.bed} \
+            --output {output.recal_table} \
+            2> {log}
         """
+
+
+rule apply_base_quality_recalibration:
+    input:
+        bam=rules.samtools_sort_and_index.output.bam,
+        bai=rules.samtools_sort_and_index.output.bai,
+        ref=config["database"]["hg19"],
+        gatk_dict=config["database"]["gatk_dict"],
+        recal_table=rules.recalibrate_base_qualities.output.recal_table,
+        bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
+    output:
+        bam="align/bqsr/{sample}.recal.bam",
+    benchmark:
+        ".log/align/bqsr/{sample}.apply_base_quality_recalibration.bm"
+    log:
+        ".log/align/bqsr/{sample}.apply_base_quality_recalibration.log",
+    conda:
+        config["conda"]["gatk"]
+    shell:
+        """
+        gatk ApplyBQSR \
+            --input {input.bam} \
+            --bqsr-recal-file {input.recal_table} \
+            --reference {input.ref} \
+            --intervals {input.bed} \
+            --output {output.bam} \
+            2> {log}
+        """
+
+
+use rule samtools_sort_and_index as recal_sort_and_index with:
+    input:
+        rules.apply_base_quality_recalibration.output.bam,
+    output:
+        bam="align/bqsr/{sample}.recal.sorted.bam",
+        bai="align/bqsr/{sample}.recal.sorted.bam.bai",
+    benchmark:
+        ".log/align/bqsr/{sample}.recal_sort_and_index.bm"
+    log:
+        ".log/align/bqsr/{sample}.recal_sort_and_index.log",

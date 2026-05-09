@@ -1,6 +1,6 @@
 rule lofreq_preprocess:
     input:
-        bam=rules.mark_duplicates.output.bam,
+        bam=rules.recal_sort_and_index.output.bam,
         ref=config["database"]["hg19"],
     output:
         bam="align/lofreq/{sample}.lofreq_ready.bam",
