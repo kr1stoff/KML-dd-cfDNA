@@ -12,8 +12,6 @@
     --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130
   ```
 
-s
-
 - 编译 Rust 程序 (分析流程部署前)
 编译后可执行文件软连接到 `wf-igt-500snp\tools`
 
@@ -23,6 +21,7 @@ s
   ```
 
 ## 开发说明
+
 - 20260509
   - 不再使用 GATK MarkDuplicates 步骤, 重复序列被标记为 1024(0x400) 下后 LoFreq 和 IGV 都会默认忽略掉重复序列.
   - 比对后使用 BQSR 校正
