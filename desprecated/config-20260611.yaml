@@ -6,7 +6,10 @@ conda:
   fastp: basic2
   bwa: basic
   samtools: basic
+  bcftools: basic
   gatk: basic
+  lofreq: basic
+  vt: basic2
   bamutils: basic2
 
 # 线程数配置

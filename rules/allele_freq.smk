@@ -1,43 +1,88 @@
-rule bcftools_view_500snps:
+rule bam_clipOverlap:
     input:
-        vcf=rules.variant_bgzip_and_index.output.vcf,
-        anno=f"{workflow.basedir}/assets/loci.anno.vcf",
+        bam=rules.recal_sort_and_index.output.bam,
+        bai=rules.recal_sort_and_index.output.bai,
     output:
-        txt="variant/snp/{sample}.500snps.raw.txt",
+        "allele/{sample}.clipOverlap.tsv",
     benchmark:
-        ".log/variant/snp/{sample}.bcftools_view_500snps.bm"
+        ".log/allele/{sample}.bam_clipOverlap.bm"
     log:
-        ".log/variant/snp/{sample}.bcftools_view_500snps.log",
+        ".log/allele/{sample}.bam_clipOverlap.log",
     conda:
-        config["conda"]["bcftools"]
+        config["conda"]["bamutils"]
+    shell:
+        "bam clipOverlap --in {input.bam} --out {output} --stats 2> {log}"
+
+
+use rule samtools_sort_and_index as bam_clipOverlap_sort_and_index with:
+    input:
+        rules.bam_clipOverlap.output,
+    output:
+        bam="allele/{sample}.clipOverlap.sorted.bam",
+        bai="allele/{sample}.clipOverlap.sorted.bam.bai",
+    benchmark:
+        ".log/allele/{sample}.clipOverlap.sorted.bam.bm"
+    log:
+        ".log/allele/{sample}.clipOverlap.sorted.bam.log",
+
+
+rule allele_mpileup:
+    input:
+        bam=rules.bam_clipOverlap_sort_and_index.output.bam,
+        bai=rules.bam_clipOverlap_sort_and_index.output.bai,
+        reference=config["database"]["hg19"],
+        positions=f"{workflow.basedir}/assets/loci.position.txt",
+    output:
+        mpileup="allele/{sample}.clipOverlap.mpileup",
+        tmpdir=temp(directory("allele/tmp-{sample}")),
+    benchmark:
+        ".log/allele/{sample}.clipOverlap.mpileup.bm"
+    log:
+        ".log/allele/{sample}.clipOverlap.mpileup.log",
+    conda:
+        config["conda"]["samtools"]
     threads: config["threads"]["medium"]
+    params:
+        "--max-depth 500000 --min-BQ 30",
     shell:
         """
-        bcftools view -R {input.anno} {input.vcf} 2> {log} | \
-        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%DP\t%AF\n' > {output.txt} 2>> {log}
+        mkdir -p {output.tmpdir}
+        cat {input.positions} | while read position; do
+            samtools mpileup \
+            --fasta-ref {input.reference} \
+            {params} \
+            -r $position {input.bam} > {output.tmpdir}/$position.mpileup
+        done | parallel -j {threads} 2> {log}
+        cat {output.tmpdir}/*.mpileup > {output.mpileup}
         """
 
 
-rule extract_500snps:
+rule parse_bases:
     input:
-        txt=rules.bcftools_view_500snps.output.txt,
-        anno=f"{workflow.basedir}/assets/loci.anno.vcf",
+        mpileup=rules.allele_mpileup.output.mpileup,
     output:
-        txt="variant/snp/{sample}.500snps.txt",
+        base_stat="allele/{sample}.clipOverlap.base_stat.tsv",
     benchmark:
-        ".log/variant/snp/{sample}.extract_500snps.bm"
+        ".log/allele/{sample}.parse_bases.bm"
     log:
-        ".log/variant/snp/{sample}.extract_500snps.log",
+        ".log/allele/{sample}.parse_bases.log",
     conda:
         config["conda"]["python"]
-    run:
-        targets = []
-        with open(input.anno, "r") as f:
-            for line in f:
-                fields = line.strip().split("\t")
-                del fields[2]  # 删除第3个元素
-                targets.append(fields)
-        with open(input.txt, "r") as f, open(output.txt, "w") as o:
-            for line in f:
-                if line.split("\t")[:4] in targets:
-                    o.write(line)
+    script:
+        "../scripts/parse_bases.py"
+
+
+rule calc_af:
+    input:
+        vcf=f"{workflow.basedir}/assets/loci.vcf",
+        base_stat=rules.parse_bases.output.base_stat,
+    output:
+        alt_freq="allele/{sample}.alt_freq.tsv",
+    benchmark:
+        ".log/allele/{sample}.calc_af.bm"
+    log:
+        ".log/allele/{sample}.calc_af.log",
+    conda:
+        config["conda"]["python"]
+    script:
+        "../scripts/calc_af.py"

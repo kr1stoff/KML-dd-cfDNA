@@ -27,7 +27,7 @@ rule all:
     input:
         "qc/multiqc",
         "upload/panel-qc-summary.tsv",
-        expand("variant/snp/{sample}.500snps.txt", sample=samples),
+        expand("allele/{sample}.alt_freq.tsv", sample=samples),
 
 
 # 导入公共规则
@@ -36,6 +36,5 @@ include: "rules/fastq_umi.smk"
 include: "rules/fastqc.smk"
 include: "rules/alignment.smk"
 include: "rules/bam_stats.smk"
-include: "rules/variant.smk"
 include: "rules/allele_freq.smk"
 include: "rules/summary.smk"

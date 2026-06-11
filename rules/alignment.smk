@@ -1,3 +1,6 @@
+# 通过测试发现 BQSR 对于纯合变异频率矫正提升很显著
+
+
 rule bwa_mem:
     input:
         fq=rules.fastp.output.trimmed,

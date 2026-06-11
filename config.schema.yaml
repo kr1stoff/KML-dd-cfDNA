@@ -11,27 +11,6 @@ properties:
   conda:
     description: Conda 环境配置
     type: object
-    properties:
-      python:
-        type: string
-      fastqc:
-        type: string
-      multiqc:
-        type: string
-      fastp:
-        type: string
-      bwa:
-        type: string
-      samtools:
-        type: string
-      bcftools:
-        type: string
-      gatk:
-        type: string
-      lofreq:
-        type: string
-      vt:
-        type: string
     additionalProperties: true
   threads:
     type: object

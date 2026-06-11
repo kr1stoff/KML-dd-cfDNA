@@ -8,12 +8,11 @@
 
   ```bash
   snakemake --cores 32 --use-conda --rerun-incomplete --scheduler greedy \
-    --config samples_tsv=$PWD/wf-igt-500snp/tests/example.tsv \
+    --config samples_tsv=$PWD/tests/example.tsv \
     --directory /data/mengxf/Task/KML260115-dd-cfDNA-iGT/results/260130
   ```
 
 - 编译 Rust 程序 (分析流程部署前)
-编译后可执行文件软连接到 `wf-igt-500snp\tools`
 
   ```bash
   cd rust/umi_filter
