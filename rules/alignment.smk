@@ -6,7 +6,7 @@ rule bwa_mem:
         fq=rules.fastp.output.trimmed,
         ref=config["database"]["hg19"],
     output:
-        "align/bwa/{sample}.sam",
+        temp("align/bwa/{sample}.sam"),
     benchmark:
         ".log/align/bwa/{sample}.bwa_mem.bm"
     log:
@@ -24,7 +24,7 @@ rule samtools_sort_and_index:
     input:
         rules.bwa_mem.output,
     output:
-        bam="align/bwa/{sample}.bam",
+        bam=temp("align/bwa/{sample}.bam"),
         bai="align/bwa/{sample}.bam.bai",
     benchmark:
         ".log/align/bwa/{sample}.samtools_sort_and_index.bm"
@@ -89,7 +89,7 @@ rule apply_base_quality_recalibration:
         recal_table=rules.recalibrate_base_qualities.output.recal_table,
         bed=f"{workflow.basedir}/assets/probeCov.predict.bed",
     output:
-        bam="align/bqsr/{sample}.recal.bam",
+        bam=temp("align/bqsr/{sample}.recal.bam"),
     benchmark:
         ".log/align/bqsr/{sample}.apply_base_quality_recalibration.bm"
     log:
@@ -112,7 +112,7 @@ use rule samtools_sort_and_index as recal_sort_and_index with:
     input:
         rules.apply_base_quality_recalibration.output.bam,
     output:
-        bam="align/bqsr/{sample}.recal.sorted.bam",
+        bam=temp("align/bqsr/{sample}.recal.sorted.bam"),
         bai="align/bqsr/{sample}.recal.sorted.bam.bai",
     benchmark:
         ".log/align/bqsr/{sample}.recal_sort_and_index.bm"

@@ -3,7 +3,7 @@ rule bam_clipOverlap:
         bam=rules.recal_sort_and_index.output.bam,
         bai=rules.recal_sort_and_index.output.bai,
     output:
-        "allele/{sample}.clipOverlap.tsv",
+        temp("allele/{sample}.clipOverlap.bam"),
     benchmark:
         ".log/allele/{sample}.bam_clipOverlap.bm"
     log:
@@ -86,3 +86,26 @@ rule calc_af:
         config["conda"]["python"]
     script:
         "../scripts/calc_af.py"
+
+
+rule calc_ddcfDNA_pct:
+    input:
+        expand("allele/{sample}.alt_freq.tsv", sample=samples),
+    output:
+        tsv="upload/all.dd_cfDNA_pct.tsv",
+        xlsx= "upload/all.dd_cfDNA_pct.xlsx",
+    benchmark:
+        ".log/upload/all.dd_cfDNA_pct.bm"
+    log:
+        ".log/upload/all.dd_cfDNA_pct.log",
+    conda:
+        config["conda"]["python"]
+    params:
+        method="both",  # ['caredx', 'gmm', 'both']
+        multiplier=2.11,  # 亲缘关系校正乘数 M (default: 2.11, 无关供受者)
+        min_depth=1000,  # 最小深度 (default: 1000)
+        het_threshold=0.35,  # HET 阈值 (default: 0.35)
+        outlier_fraction=0.05,  # 异常值分数 (default: 0.05)
+        max_contam = 0.01  # 最大 CONTAM_FREQ 过滤 (default: 0.01)
+    script:
+        "../scripts/calc_ddcfdfna.py"

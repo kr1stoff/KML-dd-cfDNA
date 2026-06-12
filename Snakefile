@@ -27,7 +27,7 @@ rule all:
     input:
         "qc/multiqc",
         "upload/panel-qc-summary.tsv",
-        expand("allele/{sample}.alt_freq.tsv", sample=samples),
+        "upload/all.dd_cfDNA_pct.xlsx",
 
 
 # 导入公共规则
