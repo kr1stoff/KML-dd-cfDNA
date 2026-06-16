@@ -40,6 +40,33 @@ rule samtools_sort_and_index:
         """
 
 
+# # ! 重复标记为1024(0x400)，在 IGV 中自动被忽略. 所以会显示深度与实际不符.
+# rule mark_duplicates:
+#     input:
+#         bam=rules.samtools_sort_and_index.output.bam,
+#     output:
+#         bam=temp("align/markdup/{sample}.markdup.bam"),  # 标记后的中间文件
+#         metrics="align/markdup/{sample}.markdup_metrics.txt",
+#         bai="align/markdup/{sample}.markdup.bai",
+#     log:
+#         ".log/align/markdup/{sample}.markdup.log",
+#     benchmark:
+#         ".log/align/markdup/{sample}.markdup.bm"
+#     conda:
+#         config["conda"]["gatk"]
+#     threads: config["threads"]["low"]
+#     shell:
+#         """
+#         gatk MarkDuplicates \
+#             -I {input.bam} \
+#             -O {output.bam} \
+#             -M {output.metrics} \
+#             --REMOVE_DUPLICATES false \
+#             --CREATE_INDEX true \
+#             --VALIDATION_STRINGENCY SILENT > {log} 2>&1
+#         """
+
+
 # BQSR 校正
 rule recalibrate_base_qualities:
     input:
